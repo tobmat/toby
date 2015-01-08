@@ -1,0 +1,25 @@
+#########################################################
+# VM Heat Template
+# Command to Run
+# heat stack-create -f .\server_template.yml <stackname>
+# --Notes--
+# To create a new template start with server_template.yml
+#########################################################
+heat_template_version: 2013-05-23
+description: Public SQL DB Template
+
+resources:
+#####################################################
+# Create Instances
+###################################################
+  sql01:
+    type: build-2nic-vm.yaml
+    properties:
+      name: 'sql01-test.oncaas.com'
+      flavor: 'm1.medium'
+      image: 'Server2012R2'
+      nw_local: 'phase3_network'
+      nw_mgt: 'management_network'
+      user_data:
+          get_file: ../scripts/install_sql.ps1      
+      security_groups: 'secgroup_leveraged'

@@ -1,0 +1,48 @@
+###################################################
+# Infrastructure Heat Template
+#
+# --Notes--
+# The domain controller is given a static IP of 172.31.0.5.  The
+# reason being is that I needed to set it as the DNS server for the
+# management subnet.  If I try to do the IP dynamically, it results
+# in a circular dependancy problem for creating the management subnet.
+###################################################
+heat_template_version: 2013-05-23
+description: SQL DB Template
+
+parameters:
+  private_network:
+    type: string
+    label: Private network name or ID
+    description: Private network to attach server to.
+    default: 06e3f074-ecd8-46e6-80c4-201fa832b1b9
+
+  management_network:
+    type: string
+    label: Management network name or ID
+    description: Mangement network to attach server to.
+    default: 9065ca99-013f-4857-8d1d-cdb4dd911573
+
+resources:
+#####################################################
+# Create Instances
+###################################################
+  db_port0:
+    type: OS::Neutron::Port
+    properties:
+      name: 'db_port0'
+      admin_state_up: true
+#     network_id: 06e3f074-ecd8-46e6-80c4-201fa832b1b9
+      network_id: { get_param: private_network }
+#       Fn::GetAtt: ['phase3_network', 'ID'] 
+      security_groups: [secgroup_leveraged]
+  
+  db_port1:
+    type: OS::Neutron::Port
+    properties:
+      name: 'db_port1'
+      admin_state_up: true
+#     network_id: 9065ca99-013f-4857-8d1d-cdb4dd911573
+      network_id: { get_param: management_network }
+#       Fn::GetAtt: ['management_network', 'ID'] 
+      security_groups: [secgroup_leveraged]

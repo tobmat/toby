@@ -1,0 +1,60 @@
+###################################################
+# Infrastructure Heat Template
+#
+# --Notes--
+# The domain controller is given a static IP of 172.31.0.5.  The
+# reason being is that I needed to set it as the DNS server for the
+# management subnet.  If I try to do the IP dynamically, it results
+# in a circular dependancy problem for creating the management subnet.
+###################################################
+heat_template_version: 2013-05-23
+description: SQL DB Template
+
+parameters:
+  flavor:
+    type: string
+    default: m1.medium
+    
+  name:
+    type: string
+#   default: 'sql01-dev.oncass.com'
+    default: 'DEV-DB-01'
+    
+  ip_l:
+    type: string
+    default: ""
+#   default: "10.0.0.100"
+
+  nw_l:
+    type: string
+#   default: "phase3_network"
+    default: "DEV_INTERNAL_SECURE"
+
+  ip_mgt:
+    type: string
+    default: ""
+#   default: "62.193.13.171"
+
+  nw_mgt:
+    type: string
+#   default: "management_network"
+    default: "DEV_EXT-MGMT_NET"
+
+resources:
+#####################################################
+# Create Instances
+###################################################
+  sql01:
+    type: OS::Nova::Server
+    properties:
+      flavor: { get_param: flavor }
+      name: { get_param: name}
+      config_drive: 'true'
+      key_name: devops
+      image: Server2012R2
+      networks: [{"fixed_ip": { get_param: ip_l}, "network": { get_param: nw_l}}, {"fixed_ip": { get_param: ip_mgt}, "network": { get_param: nw_mgt}}]
+#     networks: [{"fixed_ip": "192.168.0.77", "network": "phase3_network"}, {"fixed_ip": "", "network": "management_network"}]
+      user_data_format: RAW
+      user_data:
+          get_file: scripts/install_sql.ps1
+

@@ -1,0 +1,53 @@
+###################################################
+# Infrastructure Heat Template
+#
+# --Notes--
+# The domain controller is given a static IP of 172.31.0.5.  The
+# reason being is that I needed to set it as the DNS server for the
+# management subnet.  If I try to do the IP dynamically, it results
+# in a circular dependancy problem for creating the management subnet.
+###################################################
+heat_template_version: 2013-05-23
+description: SQL DB Template
+
+resources:
+#####################################################
+# Create Instances
+###################################################
+
+  sql01:
+    type: OS::Nova::Server
+    properties:
+      name: 'DEV-DB-01'
+      config_drive: 'true'
+      key_name: devops
+      image: Server2012R2
+      flavor: m1.medium
+      networks:
+        - port: { get_resource: db_port0 }
+        - port: { get_resource: db_port1 }
+      user_data_format: RAW
+      user_data:
+          get_file: scripts/install_sql.ps1
+  
+  db_port0:
+    type: OS::Neutron::Port
+    properties:
+      admin_state_up: true
+      network: DEV_EXT-MGMT_NET
+      "fixed_ips": [{
+          "subnet_id": "6adc656c-8ac9-41db-b21a-021967d5271e",
+          "ip_address": "62.193.13.171"
+        }]
+      security_groups: [secgroup_customer]
+  
+  db_port1:
+    type: OS::Neutron::Port
+    properties:
+      admin_state_up: true
+      network: DEV_INTERNAL_SECURE
+      "fixed_ips": [{
+          "subnet_id": "1f9a022e-92a2-49e0-88b4-4913a0582f77",
+          "ip_address": "10.0.0.100"
+        }]
+      security_groups: [secgroup_customer]

@@ -1,0 +1,29 @@
+###################################################
+# VM Heat Template
+# Command to Run
+# heat stack-create -f .\server_template.yml <stackname>
+# --Notes--
+# The domain controller is given a static IP of 172.31.0.5.  The
+# reason being is that I needed to set it as the DNS server for the
+# management subnet.  If I try to do the IP dynamically, it results
+# in a circular dependancy problem for creating the management subnet.
+###################################################
+heat_template_version: 2013-05-23
+description: SQL DB Template
+
+resources:
+#####################################################
+# Create Instances
+###################################################
+  sql01:
+    type: build-2nic-vm.yaml
+    properties:
+      name: 'DEV-DB-01'
+      flavor: 'm1.medium'
+      image: 'Server2012R2'
+      ip_local: 10.0.0.100
+      nw_local: 'DEV_INTERNAL_SECURE'
+      nw_mgt: 'DEV_EXT-MGMT_NET'
+      ip_mgt: '62.193.13.171'
+      user_data:
+          get_file: scripts/install_sql.ps1 
