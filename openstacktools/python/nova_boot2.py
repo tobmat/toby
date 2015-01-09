@@ -14,12 +14,13 @@ nova = nvclient.Client(**creds)
 image = nova.images.find(name=test['image'])
 flavor = nova.flavors.find(name=test['flavor'])
 management = nova.networks.find(label=test['management']) 
-internet = nova.networks.find(label=test['internet']) 
+internet = nova.networks.find(label=test['internet'])
+customer = nova.networks.find(label=test['customer']) 
 script = test['script']
 #print network.id
 networks = []
 networks.append({'net-id': management.id})
-networks.append({'net-id': internet.id})
+networks.append({'net-id': customer.id})
 instance = nova.servers.create(name=test['servername'],
 	                 image=image,
  	                 flavor=flavor, 
