@@ -1,30 +1,44 @@
 #!/usr/bin/env python
-import time
-import novaclient.v1_1.client as nvclient
-from credentials import get_nova_creds
-creds = get_nova_creds()
-nova = nvclient.Client(**creds)
-image = nova.images.find(name="Ubuntu 14.04 x64 LTS")
-flavor = nova.flavors.find(name="m1.medium")
-management = nova.networks.find(label="management_network") 
-internet = nova.networks.find(label="internet_network") 
-script = 'scripts/install_test.sh'
-#print network.id
-networks = []
-networks.append({'net-id': management.id})
-networks.append({'net-id': internet.id})
-instance = nova.servers.create(name="toby3",
-	                 image=image,
- 	                 flavor=flavor, 
-	                 key_name="devops", 
-	                 nics=networks,
-	                 userdata=open(script).read())
+def main(variables,tenant):
+  import time
+  import os
+  import sys
+  os.environ['OS_TENANT_NAME'] = tenant
+  import authorize as a
 
-#Poll at 5 second intervals, until the status is no longer 'BUILD'
-status = instance.status
-while status == 'BUILD':
-    time.sleep(5)
-    # Retrieve the instance again so the status field updates
-    instance = nova.servers.get(instance.id)
-    status = instance.status
-print "status: %s" % status
+  source = __import__(variables)
+
+  image = a.nova.images.find(name = source.image)
+  flavor = a.nova.flavors.find(name = source.flavor)
+  script = source.script
+
+  nicList = []
+  for n in source.nics:
+      if n['ip'].lower() == 'dhcp'.lower():
+          net = a.nova.networks.find(label=n['network']) 
+          nicList.append({'net-id': net.id})
+      else:
+          nicList.append({'net-id': net.id,
+                          'v4-fixed-ip': n['ip']})
+
+  instance = a.nova.servers.create(name = source.servername,
+  	                             image=image,
+   	                             flavor=flavor, 
+	                             key_name="devops", 
+	                             nics=nicList,
+	                             userdata=open(script).read())
+
+  #Poll at 5 second intervals, until the status is no longer 'BUILD'
+  status = instance.status
+  print "status: %s" % status
+  while status == 'BUILD':
+      time.sleep(3)
+      # Retrieve the instance again so the status field updates
+      instance = a.nova.servers.get(instance.id)
+      status = instance.status
+      print "status: BUILDING..."
+  print "status: %s" % status
+  print instance
+
+  if __name__ == "__main__":
+  	 main(sys.argv[1], sys.argv[2])
