@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-servername = 'thebomb73'
+servername = 'thebomb2'
 image = 'Ubuntu 14.04 x64 LTS'
 ### Select from images below
 """

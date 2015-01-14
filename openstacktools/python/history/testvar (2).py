@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-servername = 'thebomb73'
+servername = 'thebomb8'
 image = 'Ubuntu 14.04 x64 LTS'
 ### Select from images below
 """
@@ -22,7 +22,6 @@ image = 'Ubuntu 14.04 x64 LTS'
  """
 flavor = 'm1.medium'   #  select from following flavors['m1large', 'm1medium', 'm1small', 'm1tiny', 'm1xlarge']
 script = 'scripts/install_test.sh'
-security_groups={'default'}  
 
 ### Add or remove nics as needed
 nics=[{'network': 'customer_network', 'ip': 'dhcp'},
