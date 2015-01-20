@@ -1,0 +1,152 @@
+bdm_dict = {'uuid': image.id, 
+            'source_type': 'image',
+            'destination_type': 'local', 
+            'boot_index': 0,
+            'delete_on_termination': True}
+
+[{"source_type": "volume", "boot_index": 0, "uuid": "1def5481-44e3-48d4-8794-5fee10f8e812", "volume_id": "1def5481-44e3-48d4-8794-5fee10f8e812"}]
+[{"source_type": "volume", "destination_type": "volume", "boot_index": 0, "delete_on_termination": false, "uuid": "1def5481-44e3-48d4-8794-5fee10f8e812"}]
+
+
+nova boot --flavor 2 --block-device source='image',id='0da162e0-c87f-45df-ba15-30cae54d668d',dest='volume',size='20',shutdown=PRESERVE,bootindex='0'  --nic net-id='2bc40d42-b6a3-487a-8ae9-49ef4aac6f97' super
+
+uuid = source_id
+
+
+
+C		NTFS	Partition	49 GB
+D	CIC	NTFS	Partition	29 GB
+E		NTFS	Partition	69 GB
+
+
+PS C:\Users\toby.matherly\Documents\GitHub\toby\openstacktools> nova --debug boot --nic net-id='2bc40d42-b6a3-487a-8ae9-49ef4aac6f97' --flavor 2 --boot-volume 1def5481-44e3-48d4-872bc40d42-b6a3-487a-8ae9-49ef4aac6f97
+94-5fee10f8e812 tobytest5
+PS C:\Users\toby.matherly\Documents\GitHub\toby\openstacktools> nova --debug boot --nic net-id='2bc40d42-b6a3-487a-8ae9-49ef4aac6f97' --flavor 1 --block-device-mapping vda=1def5481-44e3-48d4-8794-5fee10f8e812 tobytest2
+REQ: curl -i 'http://62.193.12.3:5000/v2.0/tokens' -X POST -H "Accept: application/json" -H "Content-Type: application/json" -H "User-Agent: python-novaclient" -d '{"auth": {"passw
+ordCredentials": {"username": "admin", "password": "{SHA1}2ac5b74fd5a5f83427ae2b7cc705355519a30b70"}, "tenantId": "79cb4797d96e4262a4299a18dd02da1a"}}'
+RESP: [200] {'date': 'Fri, 16 Jan 2015 17:47:24 GMT', 'content-type': 'application/json', 'content-length': '3963', 'vary': 'X-Auth-Token', 'connection': 'keep-alive'}
+RESP BODY: {"access": {"token": {"issued_at": "2015-01-16T17:47:24.079659", "expires": "2015-01-16T18:47:24Z", "id": "{SHA1}32f3159529c54f583ef451b23048ad5a20c8b1d4", "tenant": {"e
+nabled": true, "description": "Dev Environment", "name": "DEV", "id": "79cb4797d96e4262a4299a18dd02da1a"}}, "serviceCatalog": [{"endpoints_links": [], "endpoints": [{"adminURL": "h
+ttp://62.193.12.8:8774/v2/79cb4797d96e4262a4299a18dd02da1a", "region": "RegionOne", "internalURL": "http://nova.piston:8774/v2/79cb4797d96e4262a4299a18dd02da1a", "publicURL": "http
+://62.193.12.8:8774/v2/79cb4797d96e4262a4299a18dd02da1a"}], "type": "compute", "name": "Compute Service"}, {"endpoints_links": [], "endpoints": [{"adminURL": "http://62.193.12.10:9
+696/", "region": "RegionOne", "internalURL": "http://62.193.12.10:9696/", "publicURL": "http://62.193.12.10:9696/"}], "type": "network", "name": "Neutron Service"}, {"endpoints_lin
+ks": [], "endpoints": [{"adminURL": "http://62.193.12.6:8776/v2/79cb4797d96e4262a4299a18dd02da1a", "region": "RegionOne", "internalURL": "http://cinder.piston:8776/v2/79cb4797d96e4
+262a4299a18dd02da1a", "publicURL": "http://62.193.12.6:8776/v2/79cb4797d96e4262a4299a18dd02da1a"}], "type": "volumev2", "name": "Volume Service V2"}, {"endpoints_links": [], "endpo
+ints": [{"adminURL": "http://62.193.12.8:8774/v3", "region": "RegionOne", "internalURL": "http://nova.piston:8774/v3", "publicURL": "http://62.193.12.8:8774/v3"}], "type": "compute
+v3", "name": "Compute Service V3"}, {"endpoints_links": [], "endpoints": [{"adminURL": "http://62.193.12.9:8888", "region": "RegionOne", "internalURL": "http://radosgw.piston:8888"
+, "publicURL": "http://62.193.12.9:8888"}], "type": "s3", "name": "S3 Service"}, {"endpoints_links": [], "endpoints": [{"adminURL": "http://62.193.12.7:9292", "region": "RegionOne"
+, "internalURL": "http://glance.piston:9292", "publicURL": "http://62.193.12.7:9292"}], "type": "image", "name": "Image Service"}, {"endpoints_links": [], "endpoints": [{"adminURL"
+: "http://62.193.12.6:8776/v1/79cb4797d96e4262a4299a18dd02da1a", "region": "RegionOne", "internalURL": "http://cinder.piston:8776/v1/79cb4797d96e4262a4299a18dd02da1a", "publicURL":
+ "http://62.193.12.6:8776/v1/79cb4797d96e4262a4299a18dd02da1a"}], "type": "volume", "name": "Volume Service"}, {"endpoints_links": [], "endpoints": [{"adminURL": "http://62.193.12.
+2:80/", "region": "RegionOne", "internalURL": "http://dashboard.piston:80/", "publicURL": "http://62.193.12.2:80/"}], "type": "dashboard", "name": "Dashboard Service"}, {"endpoints
+_links": [], "endpoints": [{"adminURL": "http://62.193.13.80:8004/v1/79cb4797d96e4262a4299a18dd02da1a", "region": "RegionOne", "internalURL": "http://62.193.13.80:8004/v1/79cb4797d
+96e4262a4299a18dd02da1a", "publicURL": "http://62.193.13.80:8004/v1/79cb4797d96e4262a4299a18dd02da1a"}], "type": "orchestration", "name": "Orchestration Service"}, {"endpoints_link
+s": [], "endpoints": [{"adminURL": "http://62.193.12.9:8888/swift/v1", "region": "RegionOne", "internalURL": "http://radosgw.piston:8888/swift/v1", "publicURL": "http://62.193.12.9
+:8888/swift/v1"}], "type": "object-store", "name": "Swift Service"}, {"endpoints_links": [], "endpoints": [{"adminURL": "http://62.193.12.3:35357/v2.0", "region": "RegionOne", "int
+ernalURL": "http://keystone.piston:5000/v2.0", "publicURL": "http://62.193.12.3:5000/v2.0"}], "type": "identity", "name": "Identity Service"}, {"endpoints_links": [], "endpoints":
+[{"adminURL": "http://62.193.12.8:8773/services/Admin", "region": "RegionOne", "internalURL": "http://nova.piston:8773/services/Cloud", "publicURL": "http://62.193.12.8:8773/servic
+es/Cloud"}], "type": "ec2", "name": "EC2 Service"}], "user": {"username": "admin", "roles_links": [], "id": "d581f470c72e4158a2528d8176fa26c3", "roles": [{"name": "ProjectAdmin"},
+{"name": "Admin"}, {"name": "_member_"}], "name": "admin"}, "metadata": {"is_admin": 0, "roles": ["768a96938245487eb1b29d3920f3d954", "358a14e42f3f42d483b216b84e7d1302", "9fe2ff9ee
+4384b1894a90878d3e92bab"]}}}
+
+REQ: curl -i 'http://62.193.12.8:8774/v2/79cb4797d96e4262a4299a18dd02da1a/flavors/1' -X GET -H "Accept: application/json" -H "User-Agent: python-novaclient" -H "X-Auth-Project-Id:
+DEV" -H "X-Auth-Token: {SHA1}32f3159529c54f583ef451b23048ad5a20c8b1d4"
+RESP: [200] {'date': 'Fri, 16 Jan 2015 17:47:24 GMT', 'connection': 'keep-alive', 'content-type': 'application/json', 'content-length': '420', 'x-compute-request-id': 'req-2e2f1a00
+-6e2c-4d2d-9a2b-4ae35f041eac'}
+RESP BODY: {"flavor": {"name": "m1.tiny", "links": [{"href": "http://62.193.12.8:8774/v2/79cb4797d96e4262a4299a18dd02da1a/flavors/1", "rel": "self"}, {"href": "http://62.193.12.8:8
+774/79cb4797d96e4262a4299a18dd02da1a/flavors/1", "rel": "bookmark"}], "ram": 512, "OS-FLV-DISABLED:disabled": false, "vcpus": 1, "swap": "", "os-flavor-access:is_public": true, "rx
+tx_factor": 1.0, "OS-FLV-EXT-DATA:ephemeral": 0, "disk": 1, "id": "1"}}
+
+REQ: curl -i 'http://62.193.12.8:8774/v2/79cb4797d96e4262a4299a18dd02da1a/os-volumes_boot' -X POST -H "Accept: application/json" -H "Content-Type: application/json" -H "User-Agent:
+ python-novaclient" -H "X-Auth-Project-Id: DEV" -H "X-Auth-Token: {SHA1}32f3159529c54f583ef451b23048ad5a20c8b1d4" -d '{"server": {"name": "tobytest2", "imageRef": "", "block_device
+_mapping": [{"device_name": "vda", "source_type": "volume", "boot_index": 0, "uuid": "1def5481-44e3-48d4-8794-5fee10f8e812", "volume_id": "1def5481-44e3-48d4-8794-5fee10f8e812"}],
+"flavorRef": "1", "max_count": 1, "min_count": 1, "networks": [{"uuid": "2bc40d42-b6a3-487a-8ae9-49ef4aac6f97"}]}}'
+RESP: [202] {'content-length': '438', 'x-compute-request-id': 'req-fa1c7e98-a238-4745-9139-761c3270f881', 'connection': 'keep-alive', 'location': 'http://62.193.12.8:8774/v2/79cb47
+97d96e4262a4299a18dd02da1a/servers/b2b3efab-d8dd-451a-911d-a75775e284f0', 'date': 'Fri, 16 Jan 2015 17:47:24 GMT', 'content-type': 'application/json'}
+RESP BODY: {"server": {"links": [{"href": "http://62.193.12.8:8774/v2/79cb4797d96e4262a4299a18dd02da1a/servers/b2b3efab-d8dd-451a-911d-a75775e284f0", "rel": "self"}, {"href": "http
+://62.193.12.8:8774/79cb4797d96e4262a4299a18dd02da1a/servers/b2b3efab-d8dd-451a-911d-a75775e284f0", "rel": "bookmark"}], "OS-DCF:diskConfig": "MANUAL", "id": "b2b3efab-d8dd-451a-91
+1d-a75775e284f0", "security_groups": [{"name": "default"}], "adminPass": "rAw2kre7szXc"}}
+
+REQ: curl -i 'http://62.193.12.8:8774/v2/79cb4797d96e4262a4299a18dd02da1a/servers/b2b3efab-d8dd-451a-911d-a75775e284f0' -X GET -H "Accept: application/json" -H "User-Agent: python-
+novaclient" -H "X-Auth-Project-Id: DEV" -H "X-Auth-Token: {SHA1}32f3159529c54f583ef451b23048ad5a20c8b1d4"
+RESP: [200] {'date': 'Fri, 16 Jan 2015 17:47:25 GMT', 'connection': 'keep-alive', 'content-type': 'application/json', 'content-length': '1282', 'x-compute-request-id': 'req-c71d572
+6-aade-4891-b29f-b8c366d9116e'}
+RESP BODY: {"server": {"OS-EXT-STS:task_state": "scheduling", "addresses": {}, "links": [{"href": "http://62.193.12.8:8774/v2/79cb4797d96e4262a4299a18dd02da1a/servers/b2b3efab-d8dd
+-451a-911d-a75775e284f0", "rel": "self"}, {"href": "http://62.193.12.8:8774/79cb4797d96e4262a4299a18dd02da1a/servers/b2b3efab-d8dd-451a-911d-a75775e284f0", "rel": "bookmark"}], "im
+age": "", "OS-EXT-STS:vm_state": "building", "OS-EXT-SRV-ATTR:instance_name": "instance-00000204", "OS-SRV-USG:launched_at": null, "flavor": {"id": "1", "links": [{"href": "http://
+62.193.12.8:8774/79cb4797d96e4262a4299a18dd02da1a/flavors/1", "rel": "bookmark"}]}, "id": "b2b3efab-d8dd-451a-911d-a75775e284f0", "user_id": "d581f470c72e4158a2528d8176fa26c3", "OS
+-DCF:diskConfig": "MANUAL", "accessIPv4": "", "accessIPv6": "", "progress": 0, "OS-EXT-STS:power_state": 0, "OS-EXT-AZ:availability_zone": "nova", "config_drive": "", "status": "BU
+ILD", "updated": "2015-01-16T17:47:25Z", "hostId": "", "OS-EXT-SRV-ATTR:host": null, "OS-SRV-USG:terminated_at": null, "key_name": null, "OS-EXT-SRV-ATTR:hypervisor_hostname": null
+, "name": "tobytest2", "created": "2015-01-16T17:47:24Z", "tenant_id": "79cb4797d96e4262a4299a18dd02da1a", "os-extended-volumes:volumes_attached": [{"id": "1def5481-44e3-48d4-8794-
+5fee10f8e812"}], "metadata": {}}}
+
+REQ: curl -i 'http://62.193.12.8:8774/v2/79cb4797d96e4262a4299a18dd02da1a/flavors/1' -X GET -H "Accept: application/json" -H "User-Agent: python-novaclient" -H "X-Auth-Project-Id:
+DEV" -H "X-Auth-Token: {SHA1}32f3159529c54f583ef451b23048ad5a20c8b1d4"
+RESP: [200] {'date': 'Fri, 16 Jan 2015 17:47:25 GMT', 'connection': 'keep-alive', 'content-type': 'application/json', 'content-length': '420', 'x-compute-request-id': 'req-ed030806
+-9c38-41db-b7dc-2c73352e5541'}
+RESP BODY: {"flavor": {"name": "m1.tiny", "links": [{"href": "http://62.193.12.8:8774/v2/79cb4797d96e4262a4299a18dd02da1a/flavors/1", "rel": "self"}, {"href": "http://62.193.12.8:8
+774/79cb4797d96e4262a4299a18dd02da1a/flavors/1", "rel": "bookmark"}], "ram": 512, "OS-FLV-DISABLED:disabled": false, "vcpus": 1, "swap": "", "os-flavor-access:is_public": true, "rx
+tx_factor": 1.0, "OS-FLV-EXT-DATA:ephemeral": 0, "disk": 1, "id": "1"}}
+
++--------------------------------------+--------------------------------------------------+
+| Property                             | Value                                            |
++--------------------------------------+--------------------------------------------------+
+| OS-DCF:diskConfig                    | MANUAL                                           |
+| OS-EXT-AZ:availability_zone          | nova                                             |
+| OS-EXT-SRV-ATTR:host                 | -                                                |
+| OS-EXT-SRV-ATTR:hypervisor_hostname  | -                                                |
+| OS-EXT-SRV-ATTR:instance_name        | instance-00000204                                |
+| OS-EXT-STS:power_state               | 0                                                |
+| OS-EXT-STS:task_state                | scheduling                                       |
+| OS-EXT-STS:vm_state                  | building                                         |
+| OS-SRV-USG:launched_at               | -                                                |
+| OS-SRV-USG:terminated_at             | -                                                |
+| accessIPv4                           |                                                  |
+| accessIPv6                           |                                                  |
+| adminPass                            | rAw2kre7szXc                                     |
+| config_drive                         |                                                  |
+| created                              | 2015-01-16T17:47:24Z                             |
+| flavor                               | m1.tiny (1)                                      |
+| hostId                               |                                                  |
+| id                                   | b2b3efab-d8dd-451a-911d-a75775e284f0             |
+| image                                | Attempt to boot from volume - no image supplied  |
+| key_name                             | -                                                |
+| metadata                             | {}                                               |
+| name                                 | tobytest2                                        |
+| os-extended-volumes:volumes_attached | [{"id": "1def5481-44e3-48d4-8794-5fee10f8e812"}] |
+| progress                             | 0                                                |
+| security_groups                      | default                                          |
+| status                               | BUILD                                            |
+| tenant_id                            | 79cb4797d96e4262a4299a18dd02da1a                 |
+| updated                              | 2015-01-16T17:47:25Z                             |
+| user_id                              | d581f470c72e4158a2528d8176fa26c3                 |
++--------------------------------------+--------------------------------------------------+
+PS C:\Users\toby.matherly\Documents\GitHub\toby\openstacktools>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
