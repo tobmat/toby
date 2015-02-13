@@ -1150,9 +1150,10 @@ function Connect-Cisco
  if ($Connect -eq "admin") {
     $connection_string='vpn.admin.hosted-inin.com'
     & 'C:\Program Files (x86)\RSA SecurID Software Token\SecurID.exe'
-    & 'C:\Program Files (x86)\Cisco\Cisco AnyConnect Secure Mobility Client\vpncli.exe' 'connect' vpn.admin.hosted-inin.com
+    & 'C:\Program Files (x86)\Cisco\Cisco AnyConnect Secure Mobility Client\vpncli.exe' 'connect' 'vpn.admin.hosted-inin.com'
+    get-process -Name "SecurID" | %{ $_.CloseMainWindow() }
  } else {
-    & 'C:\Program Files (x86)\Cisco\Cisco AnyConnect Secure Mobility Client\vpncli.exe'
+    & 'C:\Program Files (x86)\Cisco\Cisco AnyConnect Secure Mobility Client\vpncli.exe' 'connect' 'vpn.inin.com'
  }
 
 }
