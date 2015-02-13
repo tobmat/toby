@@ -44,4 +44,5 @@ Temporary Items
 .apdisk
 
 # Working Files
-~.*
+~*
+documentation/*
