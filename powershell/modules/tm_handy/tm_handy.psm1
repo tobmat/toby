@@ -1157,6 +1157,20 @@ function Connect-Cisco
  }
 
 }
+<#
+.Synopsis
+   Connect to Cisco VPN.
+.DESCRIPTION
+   Long description
+.EXAMPLE
+   Connect-Cisco -Connect vpn
+#>
+function Disconnect-Cisco
+{
+
+ & 'C:\Program Files (x86)\Cisco\Cisco AnyConnect Secure Mobility Client\vpncli.exe' 'disconnect'
+
+}
 # Alias definitions
 New-Alias -Name qc -value Test-ServerBuild
 New-Alias -Name sign -value Set-Signature
