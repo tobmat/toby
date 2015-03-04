@@ -1,0 +1,11 @@
+#PRAGMA AUTORECOVER
+#pragma namespace("\\\\.\\root\\ccm\\policy")
+Class CCM_ISV_SoftwarePolicy : CCM_Policy
+{
+[Realkey]string ADV_AdvertisementID;
+[Realkey]string PKG_PackageID;
+[Realkey]string PRG_ProgramID;
+string ISVPKG_Data;
+string ISVPROG_Data;
+string ISVADV_Data;
+};

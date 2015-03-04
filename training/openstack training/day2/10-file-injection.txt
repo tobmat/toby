@@ -1,0 +1,49 @@
+
+# Use 'user' credentials
+source ~/credentials/user
+
+# Create some files to inject
+cat > ~/textfile.txt <<EOF
+
+I'm a little text file, short and stout.
+
+EOF
+cat > ~/teapot.txt <<EOF
+                       (
+            _           ) )
+         _,(_)._        ((
+    ___,(_______).        )
+  ,'__.   /       \    /\_
+ /,' /  |""|       \  /  /
+| | |   |__|       |,'  /
+ \\\`.|                  /
+  \`. :           :    /
+    \`.            :.,'
+      \`-.________,-'
+EOF
+
+# Boot an instance injecting files
+nova boot --image cirros-qcow2 --flavor m1.tiny --file /home/cirros/textfile.txt=textfile.txt --file /home/cirros/teapot.txt=teapot.txt MyFileInjectionInstance
+
+# List instances, notice status of instance
+nova list
+
+# Ping instance after status is active, and network is up
+MYFILEINJECTIONINSTANCE_IP=`nova show MyFileInjectionInstance | awk '/ private / { print $5 }'`
+sudo ip netns exec $PRIVATE_NETNS_ID ping -c 3 $MYFILEINJECTIONINSTANCE_IP
+
+# Log into instance ( username is 'cirros', password is 'cubswin:)' )
+sudo ssh-keygen -f "/root/.ssh/known_hosts" -R $MYFILEINJECTIONINSTANCE_IP
+sudo ip netns exec $PRIVATE_NETNS_ID ssh cirros@$MYFILEINJECTIONINSTANCE_IP
+
+# Examine injected files
+sudo cat textfile.txt teapot.txt
+
+# Log out of instance
+exit
+
+# Delete instance
+nova delete MyFileInjectionInstance
+
+# List instances, notice status of instance
+nova list

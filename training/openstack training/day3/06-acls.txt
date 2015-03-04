@@ -1,0 +1,43 @@
+
+# Use the 'user' credentials
+source ~/credentials/user
+
+# Can we view the file as a non-admin?
+swift download testcontainer test.txt -o -
+
+# Use the 'admin' credentials
+source ~/credentials/admin
+
+# What are the current ACLs on the container 'testcontainer'. What does imply about default (empty) ACLs?
+swift stat testcontainer
+
+# Add an ACL to allow the non-admin user to read and get a list of objects from the container
+swift post testcontainer -r ".r:*,.rlistings"
+
+# View the ACLs now, and verify it was applied
+swift stat testcontainer
+
+# Use the 'user' credentials
+source ~/credentials/user
+
+# Can the non-admin user view the test swift object now?
+swift download testcontainer test.txt -o -
+
+# Can the non-admin user write a new object to the container?
+cp test.txt test2.txt
+swift upload testcontainer test2.txt
+
+# Use the 'admin' credentials
+source ~/credentials/admin
+
+# Add an ACL to allow the non-admin user to write to the container
+swift post testcontainer -w "MyProject:myuser"
+
+# View the ACLs now, and verify it was applied
+swift stat testcontainer
+
+# Use the 'user' credentials
+source ~/credentials/user
+
+# Now can the non-admin user write to the container?
+swift upload testcontainer test2.txt

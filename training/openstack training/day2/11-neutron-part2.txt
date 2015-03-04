@@ -1,0 +1,115 @@
+
+# Use 'user' credentials
+source ~/credentials/user
+
+# Create a total of four instances (exhaust 10.0.0.0/29 subnet IP space)
+nova boot --image cirros-qcow2 --flavor m1.tiny MyInstance1 --poll
+nova boot --image cirros-qcow2 --flavor m1.tiny MyInstance2 --poll
+nova boot --image cirros-qcow2 --flavor m1.tiny MyInstance3 --poll
+nova boot --image cirros-qcow2 --flavor m1.tiny MyInstance4 --poll
+
+# Create an additional subnet
+neutron subnet-create --name private-subnet2 $PRIVATE_NET_ID 10.0.0.8/29
+PRIVATE_SUBNET2_ID=`neutron subnet-show private-subnet2 | awk '/ id / { print $4 }'`
+
+# Examine details of network and new subnet
+neutron net-show $PRIVATE_NET_ID
+neutron subnet-show $PRIVATE_SUBNET2_ID
+
+# Boot a fifth instance
+nova boot --image cirros-qcow2 --flavor m1.tiny MyInstance5
+
+# List instances, notice status of instance
+nova list
+
+# Ping instance after status is active, and network is up
+sudo ip netns exec $PRIVATE_NETNS_ID ping -c 3 10.0.0.11
+
+# Log into instance in second subnet ( username is 'cirros', password is 'cubswin:)' )
+sudo ssh-keygen -f "/root/.ssh/known_hosts" -R 10.0.0.11
+sudo ip netns exec $PRIVATE_NETNS_ID ssh cirros@10.0.0.11
+
+# Ping instance in first subnet (should fail, as we have nothing routing between subnets)
+ping -c 3 10.0.0.2
+
+# Log out of instance
+exit
+
+# Create a router and connect two subnets
+neutron router-create MyRouter
+ROUTER_ID=`neutron router-show MyRouter | awk '/ id / { print $4 }'`
+neutron router-interface-add $ROUTER_ID $PRIVATE_SUBNET1_ID
+neutron router-interface-add $ROUTER_ID $PRIVATE_SUBNET2_ID
+
+# List interfaces attached to router
+neutron router-port-list $ROUTER_ID
+
+# Log into instance in second subnet ( username is 'cirros', password is 'cubswin:)' )
+sudo ssh-keygen -f "/root/.ssh/known_hosts" -R 10.0.0.11
+sudo ip netns exec $PRIVATE_NETNS_ID ssh cirros@10.0.0.11
+
+# Ping instance in first subnet
+ping -c 3 10.0.0.2
+
+# Log out of instance
+exit
+
+# Create 'neutron' credentials
+cat >> ~/credentials/neutron <<EOF
+export OS_USERNAME=neutron
+export OS_PASSWORD=notneutron
+export OS_TENANT_NAME=Services
+export OS_AUTH_URL=http://$MY_PRIVATE_IP:5000/v2.0/
+export OS_REGION_NAME=RegionOne
+EOF
+
+# Use 'neutron' credentials
+source ~/credentials/neutron
+
+# Create a provider owned network and subnet (admins only, owned by 'Services' tenant)
+### Toby - turn off dhcp because we want to use this network for floating IPs.
+echo $MY_PUBLIC_SUBNET_CIDR
+neutron net-create public --router:external=True
+PUBLIC_NET_ID=`neutron net-show public | awk '/ id / { print $4 }'`
+neutron subnet-create --name public-subnet --disable-dhcp $PUBLIC_NET_ID $MY_PUBLIC_SUBNET_CIDR
+PUBLIC_SUBNET_ID=`neutron subnet-show public-subnet | awk '/ id / { print $4 }'`
+
+# Switch back to 'user' credentials
+source ~/credentials/user
+
+# Connect router to public network
+neutron router-gateway-set $ROUTER_ID $PUBLIC_NET_ID
+
+# Exmaine details of router
+neutron router-show $ROUTER_ID
+
+# Get instance ID for MyInstance1
+MYINSTANCE1_ID=`nova show MyInstance1 | awk '/ id / { print $4 }'`
+
+# Find port id for instance
+neutron port-list --device_id=$MYINSTANCE1_ID
+MYINSTANCE1_PORT_ID=`neutron port-list --device_id=$MYINSTANCE1_ID -f csv -c id | awk 'END{print};{gsub(/[\"\r]/,"")}'`
+
+# Create a floating IP and attach it to instance
+neutron floatingip-create --port_id=$MYINSTANCE1_PORT_ID $PUBLIC_NET_ID
+
+# Create a new security group
+neutron security-group-create remote
+SECURITY_GROUP_ID=`neutron security-group-show remote | awk '/ id / { print $4 }'`
+
+# Add rules to security group to allow SSH and ping
+neutron security-group-rule-create --direction ingress --ethertype IPv4 --protocol tcp --port-range-min 22 --port-range-max 22 --remote-ip-prefix 0.0.0.0/0 $SECURITY_GROUP_ID
+neutron security-group-rule-create --direction ingress --ethertype IPv4 --protocol icmp --remote-ip-prefix 0.0.0.0/0 $SECURITY_GROUP_ID
+
+# Apply security group to instance with floating IP
+nova add-secgroup $MYINSTANCE1_ID $SECURITY_GROUP_ID
+
+# Exmaine instance, notice security groups being applied
+nova show $MYINSTANCE1_ID
+
+# Log into a different instance ( username is 'cirros', password is 'cubswin:)' )
+sudo ssh-keygen -f "/root/.ssh/known_hosts" -R 10.0.0.11
+sudo ip netns exec $PRIVATE_NETNS_ID ssh cirros@10.0.0.11
+
+# Ping instance with floating IP
+ping -c 3 172.16.0.x

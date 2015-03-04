@@ -1,0 +1,112 @@
+body {
+	padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+}
+
+/* Slides */
+
+.slides {
+	display: none;
+}
+
+.with-slides .slides {
+	display: block;
+}
+
+/* Title */
+
+body .nova-only,
+body .swift-only,
+body .nova-and-swift {
+	display: none;
+}
+
+body.nova-only .nova-only,
+body.swift-only .swift-only,
+body.nova-and-swift .nova-and-swift,
+body.swift-and-nova .nova-and-swift {
+	display: block;
+}
+
+body.swift-only span.swift-only,
+body.nova-and-swift span.nova-and-swift,
+body.swift-and-nova span.nova-and-swift {
+	display: inline;
+}
+
+/* Hide Content */
+
+#nova,
+#nova-part-1,
+#nova-part-2,
+#swift,
+#swift-part-1,
+#swift-part-2 {
+	display: none;
+}
+
+/* Show Content */
+
+#day-1 #nova,
+#day-1 #nova-part-1 {
+	display: block;
+}
+
+#day-2 #nova,
+#day-2 #nova-part-1,
+#day-2 #nova-part-2 {
+	display: block;
+}
+
+#day-3 #nova,
+#day-3 #nova-part-1,
+#day-3 #nova-part-2,
+#day-3 #swift,
+#day-3 #swift-part-1 {
+	display: block;
+}
+
+#day-4 #nova,
+#day-4 #nova-part-1,
+#day-4 #nova-part-2,
+#day-4 #swift,
+#day-4 #swift-part-1,
+#day-4 #swift-part-2 {
+	display: block;
+}
+
+/* Swift Only */
+
+#day-1.swift-only #nova {
+	display: none;
+}
+
+#day-1.swift-only #swift,
+#day-1.swift-only #swift-part-1 {
+	display: block;
+}
+
+#day-2.swift-only #nova {
+	display: none;
+}
+
+#day-2.swift-only #swift,
+#day-2.swift-only #swift-part-1,
+#day-2.swift-only #swift-part-2 {
+	display: block;
+}
+
+/* Swift Lab Size */
+
+body .single-lab,
+body .double-lab,
+body .triple-lab,
+body .quadruple-lab {
+	display: none;
+}
+
+body.single-lab .single-lab,
+body.double-lab .double-lab,
+body.triple-lab .triple-lab,
+body.quadruple-lab .quadruple-lab {
+	display: inline;
+}

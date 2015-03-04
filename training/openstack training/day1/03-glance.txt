@@ -1,0 +1,109 @@
+
+# Install Glance - OpenStack Image Service
+sudo apt-get install -y glance
+
+# Stop Glance
+sudo service glance-api stop
+sudo service glance-registry stop
+
+# Create Glance database
+mysql -u root -pnotmysql -e "CREATE DATABASE glance;"
+mysql -u root -pnotmysql -e "GRANT ALL ON glance.* TO 'glance'@'localhost' IDENTIFIED BY 'notglance';"
+mysql -u root -pnotmysql -e "GRANT ALL ON glance.* TO 'glance'@'%' IDENTIFIED BY 'notglance';"
+
+# Use 'admin' credentials
+source ~/credentials/admin
+
+# Create Glance service user
+keystone user-create --tenant-id $SERVICE_TENANT_ID --name glance --pass notglance
+GLANCE_USER_ID=`keystone user-get glance | awk '/ id / { print $4 }'`
+
+# Grant 'admin' role to Glance service user
+keystone user-role-add --user-id $GLANCE_USER_ID --tenant-id $SERVICE_TENANT_ID --role-id $ADMIN_ROLE_ID
+
+# List service users and roles
+keystone user-list --tenant-id $SERVICE_TENANT_ID
+keystone user-role-list --tenant-id $SERVICE_TENANT_ID --user-id $GLANCE_USER_ID
+
+# Populate service in service catalog
+keystone service-create --name=glance --type=image --description="Glance Image Service"
+GLANCE_SVC_ID=`keystone service-get glance | awk '/ id / { print $4 }'`
+
+# Populate endpoint in service catalog
+keystone endpoint-create --region RegionOne --service-id=$GLANCE_SVC_ID --publicurl=http://$MY_PUBLIC_IP:9292/v1 --internalurl=http://$MY_PRIVATE_IP:9292/v1 --adminurl=http://$MY_PRIVATE_IP:9292/v1
+
+# List new services
+keystone service-list
+
+# List new endpoints
+keystone endpoint-list
+
+# Configure Glance-API
+sudo sed -i "s|#connection = <None>|connection = mysql://glance:notglance@$MY_PRIVATE_IP/glance|g" /etc/glance/glance-api.conf
+sudo sed -i "s/rabbit_host = localhost/rabbit_host = $MY_PRIVATE_IP/g" /etc/glance/glance-api.conf
+sudo sed -i "s/auth_host = 127.0.0.1/auth_host = $MY_PRIVATE_IP/g" /etc/glance/glance-api.conf
+sudo sed -i 's/%SERVICE_TENANT_NAME%/Services/g' /etc/glance/glance-api.conf
+sudo sed -i 's/%SERVICE_USER%/glance/g' /etc/glance/glance-api.conf
+sudo sed -i 's/%SERVICE_PASSWORD%/notglance/g' /etc/glance/glance-api.conf
+sudo sed -i 's/#flavor=/flavor = keystone/g' /etc/glance/glance-api.conf
+sudo sed -i 's/#show_image_direct_url = False/show_image_direct_url = True/g' /etc/glance/glance-api.conf
+
+# Configure Glance-Registry
+sudo sed -i "s|#connection = <None>|connection = mysql://glance:notglance@$MY_PRIVATE_IP/glance|g" /etc/glance/glance-registry.conf
+sudo sed -i "s/auth_host = 127.0.0.1/auth_host = $MY_PRIVATE_IP/g" /etc/glance/glance-registry.conf
+sudo sed -i 's/%SERVICE_TENANT_NAME%/Services/g' /etc/glance/glance-registry.conf
+sudo sed -i 's/%SERVICE_USER%/glance/g' /etc/glance/glance-registry.conf
+sudo sed -i 's/%SERVICE_PASSWORD%/notglance/g' /etc/glance/glance-registry.conf
+sudo sed -i 's/#flavor=/flavor = keystone/g' /etc/glance/glance-registry.conf
+
+# Initialize Glance database
+sudo glance-manage db_sync
+
+# Start Glance
+sudo service glance-registry start
+sudo service glance-api start
+
+# Verify Glance is running
+pgrep -l glance
+
+# Download some images
+mkdir ~/images
+wget http://training.rackspace.local/resources/images/threepart/cirros-0.3.2-x86_64-uec.tar.gz -qO- | tar zxC ~/images
+wget http://training.rackspace.local/resources/images/qcow2/cirros-0.3.2-x86_64-disk.img -O ~/images/cirros-0.3.2-x86_64-disk.img
+
+# View downloaded images
+ll ~/images
+
+# Use 'user' credentials
+source ~/credentials/user
+
+# Register a qcow2 image
+glance image-create --name "cirros-qcow2" --disk-format qcow2 --container-format bare --is-public True --file ~/images/cirros-0.3.2-x86_64-disk.img
+IMAGE1_ID=`glance image-show cirros-qcow2 | awk '/ id / { print $4 }'`
+
+# Register a three part image (amazon style, separate kernel and ramdisk)
+glance image-create --name "cirros-threepart-kernel" --disk-format aki --container-format aki --is-public True --file ~/images/cirros-0.3.2-x86_64-vmlinuz
+KERNEL_ID=`glance image-show cirros-threepart-kernel | awk '/ id / { print $4 }'`
+glance image-create --name "cirros-threepart-ramdisk" --disk-format ari --container-format ari --is-public True --file ~/images/cirros-0.3.2-x86_64-initrd
+RAMDISK_ID=`glance image-show cirros-threepart-ramdisk | awk '/ id / { print $4 }'`
+glance image-create --name "cirros-threepart" --disk-format ami --container-format ami --is-public True --property kernel_id=$KERNEL_ID --property ramdisk_id=$RAMDISK_ID --file ~/images/cirros-0.3.2-x86_64-blank.img
+IMAGE2_ID=`glance image-show cirros-threepart | awk '/ id / { print $4 }'`
+
+# Verify images exist in glance
+glance image-list
+
+# Verify images have been copied to Glance backend store
+ll /var/lib/glance/images
+
+# Examine details of images
+glance image-show $IMAGE1_ID
+glance image-show $IMAGE2_ID
+
+# Show presence of Glance v2 API (notice v2 introduces direct_url, tags, etc.)
+glance --os-image-api-version 2 image-show $IMAGE1_ID
+glance --os-image-api-version 2 image-show $IMAGE2_ID
+
+cat >> ~/.bashrc <<EOF
+export IMAGE1_ID=$IMAGE1_ID
+export IMAGE2_ID=$IMAGE2_ID
+EOF

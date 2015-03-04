@@ -1,0 +1,31 @@
+
+# Use the 'admin' credentials
+source ~/credentials/admin
+
+# Find your account ID
+swift stat
+ACCOUNT_ID=`swift stat | awk '/ Account: / { print $2 }'`
+
+# Find locations of object
+sudo swift-get-nodes /etc/swift/object.ring.gz $ACCOUNT_ID testcontainer test.txt
+
+# Use the provided cURL commands to verify the object exists at the primary locations, but not the handoff
+curl -I -XHEAD "http://<ip-address>:6000/<primary-storage-device>/<partition>/<account-id>/testcontainer/test.txt"
+curl -I -XHEAD "http://<ip-address>:6000/<handoff-storage-device>/<partition>/<account-id>/testcontainer/test.txt"
+
+# Unmount drive from one of the primary locations
+sudo umount /srv/node/<primary-storage-device>
+
+# Wait for replication to occur
+
+# Use the provided cURL commands to verify the object had been replicated to the handoff
+curl -I -XHEAD "http://<ip-address>:6000/<handoff-storage-device>/<partition>/<account-id>/testcontainer/test.txt"
+
+# Remount drive
+sudo mount /srv/node/<primary-storage-device>
+
+# Wait for replication to clean up
+
+# Use the provided cURL commands to verify the object exists at the primary locations, but not the handoff
+curl -I -XHEAD "http://<ip-address>:6000/<primary-storage-device>/<partition>/<account-id>/testcontainer/test.txt"
+curl -I -XHEAD "http://<ip-address>:6000/<handoff-storage-device>/<partition>/<account-id>/testcontainer/test.txt"

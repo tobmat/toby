@@ -1,0 +1,41 @@
+
+# Use the 'admin' credentials
+source ~/credentials/admin
+
+# Get auth token from keystone
+keystone token-get
+AUTH_TOKEN=`keystone token-get | awk '/ id / { print $4 }'`
+
+# Get swift publicURL from keystone
+keystone catalog --service object-store
+STORAGE_URL=`keystone catalog --service object-store | awk '/ publicURL / { print $4 }'`
+
+# Create an object
+echo "Will expire at a specific date and time..." >> willexpire
+
+# Upload object
+swift upload testcontainer willexpire
+
+# One hour later timestamp
+ONE_HOUR_LATER=`date -d "now+1 hour" +%s`
+
+# Set object to expire at an absolute time (X-Delete-At)
+http POST $STORAGE_URL/testcontainer/willexpire X-Auth-Token:$AUTH_TOKEN X-Delete-At:$ONE_HOUR_LATER
+
+# View headers of object
+swift stat testcontainer willexpire
+
+# Create another object
+echo "This message will self destruct..." >> supersecret
+
+# Upload object
+swift upload testcontainer supersecret
+
+# Set object to expire after a relative amount of time (X-Delete-After)
+http POST $STORAGE_URL/testcontainer/supersecret X-Auth-Token:$AUTH_TOKEN X-Delete-After:30
+
+# Try accessing object until it expires, notice converted to X-Delete-At
+watch -n 1 swift stat testcontainer supersecret
+
+# List objects in container
+swift list testcontainer

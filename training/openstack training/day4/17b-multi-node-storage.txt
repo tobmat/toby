@@ -1,0 +1,296 @@
+
+# Install Ubuntu Cloud Keyring and add Ubuntu Cloud Archive repository for Icehouse
+# Note: This has already been completed for you in this training environment.
+# sudo apt-get install -y ubuntu-cloud-keyring python-software-properties
+# sudo add-apt-repository -y cloud-archive:icehouse
+# sudo apt-get update
+
+# Get Node IP Addresses
+NODE_01_IP=192.168.2.10
+NODE_02_IP=192.168.2.11
+NODE_03_IP=192.168.2.12
+NODE_03_IP=192.168.2.13
+NODE_05_IP=192.168.2.14
+
+# Synchronize time
+sudo ntpdate -u training.rackspace.local
+
+# Install Swift dependencies
+sudo apt-get install -y --force-yes xfsprogs memcached python-memcache python-webob python-keystone
+
+# Install Swift - OpenStack Object Storage
+sudo apt-get install -y swift swift-account swift-container swift-object swift-object-expirer swift-proxy python-swiftclient
+
+# Stop Swift
+sudo swift-init all stop
+
+# Create the swift cache and keystone-signing diectories
+sudo mkdir -p /var/cache/swift/keystone-signing
+
+# Ensure swift owns everything in it's cache directory
+sudo chown -R swift: /var/cache/swift
+
+# Set up the filesystems
+sudo mkfs.xfs -f -i size=1024 /dev/loop2
+sudo mkfs.xfs -f -i size=1024 /dev/loop3
+sudo mkfs.xfs -f -i size=1024 /dev/loop4
+sudo mkfs.xfs -f -i size=1024 /dev/loop5
+sudo mkfs.xfs -f -i size=1024 /dev/loop6
+sudo mkfs.xfs -f -i size=1024 /dev/loop7
+
+# Create the mount points
+sudo mkdir -p /srv/node/loop{2,3,4,5,6,7}
+
+# Setup drives to be mounted in /etc/fstab (notice noauto)
+( cat | sudo tee -a /etc/fstab ) <<EOF
+/dev/loop2 /srv/node/loop2 xfs noauto,noatime,nodiratime,nobarrier,logbufs=8 0 0
+/dev/loop3 /srv/node/loop3 xfs noauto,noatime,nodiratime,nobarrier,logbufs=8 0 0
+/dev/loop4 /srv/node/loop4 xfs noauto,noatime,nodiratime,nobarrier,logbufs=8 0 0
+/dev/loop5 /srv/node/loop5 xfs noauto,noatime,nodiratime,nobarrier,logbufs=8 0 0
+/dev/loop6 /srv/node/loop6 xfs noauto,noatime,nodiratime,nobarrier,logbufs=8 0 0
+/dev/loop7 /srv/node/loop7 xfs noauto,noatime,nodiratime,nobarrier,logbufs=8 0 0
+EOF
+
+# Mount the drives now
+sudo mount /srv/node/loop2
+sudo mount /srv/node/loop3
+sudo mount /srv/node/loop4
+sudo mount /srv/node/loop5
+sudo mount /srv/node/loop6
+sudo mount /srv/node/loop7
+
+# Mount the drives at boot
+( cat | sudo tee /etc/rc.local ) <<EOF
+#!/bin/sh -e
+
+mount /srv/node/loop2
+mount /srv/node/loop3
+mount /srv/node/loop4
+mount /srv/node/loop5
+mount /srv/node/loop6
+mount /srv/node/loop7
+
+exit 0
+EOF
+
+# Ensure swift user owns everything
+sudo chown -R swift: /srv/node
+
+# Configure rsync
+sudo sed -i 's/RSYNC_ENABLE=false/RSYNC_ENABLE=true/g' /etc/default/rsync
+
+( cat | sudo tee /etc/rsyncd.conf ) <<EOF
+uid = swift
+gid = swift
+log file = /var/log/rsyncd.log
+pid file = /var/run/rsyncd.pid
+address = 0.0.0.0
+
+[account]
+max connections = 25
+path = /srv/node/
+read only = false
+lock file = /var/lock/account.lock
+
+[container]
+max connections = 25
+path = /srv/node/
+read only = false
+lock file = /var/lock/container.lock
+
+[object]
+max connections = 25
+path = /srv/node/
+read only = false
+lock file = /var/lock/object.lock
+EOF
+
+# Restart rsync
+sudo service rsync restart
+
+# Configure memcached
+sudo sed -i 's/-l 127.0.0.1/-l 0.0.0.0/g' /etc/memcached.conf
+
+# Restart memcached
+sudo service memcached restart
+
+# Configure swift
+( cat | sudo tee /etc/swift/swift.conf ) <<EOF
+[swift-hash]
+swift_hash_path_prefix = YOUR_RANDOM_PREFIX_SALT
+swift_hash_path_suffix = YOUR_RANDOM_SUFFIX_SALT
+EOF
+
+( cat | sudo tee /etc/swift/proxy-server.conf ) <<EOF
+[DEFAULT]
+bind_port = 8080
+user = swift
+
+[pipeline:main]
+pipeline = catch_errors healthcheck cache authtoken keystoneauth staticweb proxy-logging proxy-server
+
+[filter:catch_errors]
+use = egg:swift#catch_errors
+
+[filter:healthcheck]
+use = egg:swift#healthcheck
+
+[filter:cache]
+use = egg:swift#memcache
+memcache_servers = $NODE_02_IP:11211, $NODE_03_IP:11211, $NODE_04_IP:11211, $NODE_05_IP:11211
+
+[filter:authtoken]
+paste.filter_factory = keystoneclient.middleware.auth_token:filter_factory
+# Delaying the auth decision is required to support token-less
+# usage for anonymous referrers ('.r:*') or for tempurl/formpost
+# middleware.
+delay_auth_decision = true
+auth_host = $NODE_01_IP
+auth_port = 35357
+auth_protocol = http
+auth_uri = http://$NODE_01_IP:5000/
+admin_tenant_name = Services
+admin_user = swift
+admin_password = notswift
+signing_dir = /var/cache/swift/keystone-signing
+
+[filter:keystoneauth]
+use = egg:swift#keystoneauth
+operator_roles = admin,swiftoperator
+
+[filter:staticweb]
+use = egg:swift#staticweb
+
+[filter:proxy-logging]
+use = egg:swift#proxy_logging
+
+[app:proxy-server]
+use = egg:swift#proxy
+account_autocreate = true
+
+EOF
+
+( cat | sudo tee /etc/swift/object-expirer.conf ) <<EOF
+[DEFAULT]
+
+[object-expirer]
+interval = 300
+
+[pipeline:main]
+pipeline = catch_errors cache proxy-server
+
+[app:proxy-server]
+use = egg:swift#proxy
+
+[filter:cache]
+use = egg:swift#memcache
+memcache_servers = $NODE_02_IP:11211, $NODE_03_IP:11211, $NODE_04_IP:11211, $NODE_05_IP:11211
+
+[filter:catch_errors]
+use = egg:swift#catch_errors
+
+EOF
+
+sudo sed -i /etc/swift/container-server.conf -e 's/workers = 2/workers = 2\nallow_versions = true/'
+
+# Create the rings
+cd /etc/swift
+
+# Create the object ring
+sudo swift-ring-builder object.builder create 10 3 1
+
+sudo swift-ring-builder object.builder add r1z1-$NODE_02_IP:6000/loop2 1000
+sudo swift-ring-builder object.builder add r1z1-$NODE_02_IP:6000/loop3 1000
+sudo swift-ring-builder object.builder add r1z1-$NODE_02_IP:6000/loop4 1000
+sudo swift-ring-builder object.builder add r1z1-$NODE_02_IP:6000/loop5 1000
+
+sudo swift-ring-builder object.builder add r1z2-$NODE_03_IP:6000/loop2 1000
+sudo swift-ring-builder object.builder add r1z2-$NODE_03_IP:6000/loop3 1000
+sudo swift-ring-builder object.builder add r1z2-$NODE_03_IP:6000/loop4 1000
+sudo swift-ring-builder object.builder add r1z2-$NODE_03_IP:6000/loop5 1000
+
+sudo swift-ring-builder object.builder add r1z3-$NODE_04_IP:6000/loop2 1000
+sudo swift-ring-builder object.builder add r1z3-$NODE_04_IP:6000/loop3 1000
+sudo swift-ring-builder object.builder add r1z3-$NODE_04_IP:6000/loop4 1000
+sudo swift-ring-builder object.builder add r1z3-$NODE_04_IP:6000/loop5 1000
+
+sudo swift-ring-builder object.builder add r1z4-$NODE_05_IP:6000/loop2 1000
+sudo swift-ring-builder object.builder add r1z4-$NODE_05_IP:6000/loop3 1000
+sudo swift-ring-builder object.builder add r1z4-$NODE_05_IP:6000/loop4 1000
+sudo swift-ring-builder object.builder add r1z4-$NODE_05_IP:6000/loop5 1000
+
+# Create the container ring
+sudo swift-ring-builder container.builder create 10 3 1
+
+sudo swift-ring-builder container.builder add r1z1-$NODE_02_IP:6001/loop2 1000
+sudo swift-ring-builder container.builder add r1z1-$NODE_02_IP:6001/loop3 1000
+sudo swift-ring-builder container.builder add r1z1-$NODE_02_IP:6001/loop4 1000
+sudo swift-ring-builder container.builder add r1z1-$NODE_02_IP:6001/loop5 1000
+
+sudo swift-ring-builder container.builder add r1z2-$NODE_03_IP:6001/loop2 1000
+sudo swift-ring-builder container.builder add r1z2-$NODE_03_IP:6001/loop3 1000
+sudo swift-ring-builder container.builder add r1z2-$NODE_03_IP:6001/loop4 1000
+sudo swift-ring-builder container.builder add r1z2-$NODE_03_IP:6001/loop5 1000
+
+sudo swift-ring-builder container.builder add r1z3-$NODE_04_IP:6001/loop2 1000
+sudo swift-ring-builder container.builder add r1z3-$NODE_04_IP:6001/loop3 1000
+sudo swift-ring-builder container.builder add r1z3-$NODE_04_IP:6001/loop4 1000
+sudo swift-ring-builder container.builder add r1z3-$NODE_04_IP:6001/loop5 1000
+
+sudo swift-ring-builder container.builder add r1z4-$NODE_05_IP:6001/loop2 1000
+sudo swift-ring-builder container.builder add r1z4-$NODE_05_IP:6001/loop3 1000
+sudo swift-ring-builder container.builder add r1z4-$NODE_05_IP:6001/loop4 1000
+sudo swift-ring-builder container.builder add r1z4-$NODE_05_IP:6001/loop5 1000
+
+# Create the account ring
+sudo swift-ring-builder account.builder create 10 3 1
+
+sudo swift-ring-builder account.builder add r1z1-$NODE_02_IP:6002/loop2 1000
+sudo swift-ring-builder account.builder add r1z1-$NODE_02_IP:6002/loop3 1000
+sudo swift-ring-builder account.builder add r1z1-$NODE_02_IP:6002/loop4 1000
+sudo swift-ring-builder account.builder add r1z1-$NODE_02_IP:6002/loop5 1000
+
+sudo swift-ring-builder account.builder add r1z2-$NODE_03_IP:6002/loop2 1000
+sudo swift-ring-builder account.builder add r1z2-$NODE_03_IP:6002/loop3 1000
+sudo swift-ring-builder account.builder add r1z2-$NODE_03_IP:6002/loop4 1000
+sudo swift-ring-builder account.builder add r1z2-$NODE_03_IP:6002/loop5 1000
+
+sudo swift-ring-builder account.builder add r1z3-$NODE_04_IP:6002/loop2 1000
+sudo swift-ring-builder account.builder add r1z3-$NODE_04_IP:6002/loop3 1000
+sudo swift-ring-builder account.builder add r1z3-$NODE_04_IP:6002/loop4 1000
+sudo swift-ring-builder account.builder add r1z3-$NODE_04_IP:6002/loop5 1000
+
+sudo swift-ring-builder account.builder add r1z4-$NODE_05_IP:6002/loop2 1000
+sudo swift-ring-builder account.builder add r1z4-$NODE_05_IP:6002/loop3 1000
+sudo swift-ring-builder account.builder add r1z4-$NODE_05_IP:6002/loop4 1000
+sudo swift-ring-builder account.builder add r1z4-$NODE_05_IP:6002/loop5 1000
+
+# Verify the contents of each ring
+sudo swift-ring-builder object.builder
+sudo swift-ring-builder container.builder
+sudo swift-ring-builder account.builder
+
+# Rebalance each ring using a seed value
+sudo swift-ring-builder object.builder rebalance 1337
+sudo swift-ring-builder container.builder rebalance 1337
+sudo swift-ring-builder account.builder rebalance 1337
+
+# Notice the distribution of partitions amongst the storage locations
+sudo swift-ring-builder object.builder
+sudo swift-ring-builder container.builder
+sudo swift-ring-builder account.builder
+
+# Verify rings are identical
+sudo md5sum *.ring.gz | md5sum
+
+# Ensure all files are owned by swift
+sudo chown -R swift: /etc/swift
+
+# Start the swift services
+sudo swift-init all restart
+
+# Inspect the running swift services
+sudo swift-init all status
+
+# Navigate back to home directory
+cd

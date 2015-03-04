@@ -1,0 +1,162 @@
+
+# Install Neutron dependencies
+sudo apt-get install -y openvswitch-switch
+
+# Check Kernel Version
+uname -r
+
+# Install Open vSwitch Datapath DKMS if Kernel < 3.11
+# sudo apt-get install -y openvswitch-datapath-dkms
+
+# Ensure Kernel Modules are loaded
+sudo modprobe gre
+sudo modprobe openvswitch
+
+# Restart Open vSwitch
+sudo service openvswitch-switch restart
+
+# Install Neutron - OpenStack Network Service
+sudo apt-get install -y neutron-server neutron-plugin-ml2 neutron-plugin-openvswitch-agent neutron-dhcp-agent neutron-l3-agent neutron-metadata-agent
+
+# Stop Neutron
+sudo service neutron-plugin-openvswitch-agent stop
+sudo service neutron-dhcp-agent stop
+sudo service neutron-l3-agent stop
+sudo service neutron-metadata-agent stop
+sudo service neutron-server stop
+
+# Create Neutron database
+mysql -u root -pnotmysql -e "CREATE DATABASE neutron;"
+mysql -u root -pnotmysql -e "GRANT ALL ON neutron.* TO 'neutron'@'localhost' IDENTIFIED BY 'notneutron';"
+mysql -u root -pnotmysql -e "GRANT ALL ON neutron.* TO 'neutron'@'%' IDENTIFIED BY 'notneutron';"
+
+# Use 'admin' credentials
+source ~/credentials/admin
+
+# Create Neutron service user
+keystone user-create --tenant-id $SERVICE_TENANT_ID --name neutron --pass notneutron
+NEUTRON_USER_ID=`keystone user-get neutron | awk '/ id / { print $4 }'`
+
+# Grant 'admin' role to Neutron service user
+keystone user-role-add --user-id $NEUTRON_USER_ID --tenant-id $SERVICE_TENANT_ID --role-id $ADMIN_ROLE_ID
+
+# List service users and roles
+keystone user-list --tenant-id $SERVICE_TENANT_ID
+keystone user-role-list --tenant-id $SERVICE_TENANT_ID --user-id $NEUTRON_USER_ID
+
+# Populate service in service catalog
+keystone service-create --name=neutron --type=network --description="Neutron Network Service"
+NEUTRON_SVC_ID=`keystone service-get neutron | awk '/ id / { print $4 }'`
+
+# Populate endpoint in service catalog
+keystone endpoint-create --region RegionOne --service-id=$NEUTRON_SVC_ID --publicurl=http://$MY_PUBLIC_IP:9696 --internalurl=http://$MY_PRIVATE_IP:9696 --adminurl=http://$MY_PRIVATE_IP:9696
+
+# List new services
+keystone service-list
+
+# List new endpoints
+keystone endpoint-list
+
+# Configure Neutron
+sudo sed -i "s|connection = sqlite:////var/lib/neutron/neutron.sqlite|connection = mysql://neutron:notneutron@$MY_PRIVATE_IP/neutron|g" /etc/neutron/neutron.conf
+sudo sed -i "s/# rabbit_host = localhost/rabbit_host = $MY_PRIVATE_IP/g" /etc/neutron/neutron.conf
+sudo sed -i 's/# allow_overlapping_ips = False/allow_overlapping_ips = True/g' /etc/neutron/neutron.conf
+sudo sed -i 's/core_plugin = neutron.plugins.ml2.plugin.Ml2Plugin/core_plugin = ml2/g' /etc/neutron/neutron.conf
+sudo sed -i 's/# service_plugins =/service_plugins = router/g' /etc/neutron/neutron.conf
+sudo sed -i 's/# auth_strategy = keystone/auth_strategy = keystone/g' /etc/neutron/neutron.conf
+sudo sed -i "s/auth_host = 127.0.0.1/auth_host = $MY_PRIVATE_IP/g" /etc/neutron/neutron.conf
+sudo sed -i 's/%SERVICE_TENANT_NAME%/Services/g' /etc/neutron/neutron.conf
+sudo sed -i 's/%SERVICE_USER%/neutron/g' /etc/neutron/neutron.conf
+sudo sed -i 's/%SERVICE_PASSWORD%/notneutron/g' /etc/neutron/neutron.conf
+sudo sed -i "s/# notify_nova_on_port_status_changes = True/notify_nova_on_port_status_changes = True/g" /etc/neutron/neutron.conf
+sudo sed -i "s/# notify_nova_on_port_data_changes = True/notify_nova_on_port_data_changes = True/g" /etc/neutron/neutron.conf
+sudo sed -i "s|# nova_url = http://127.0.0.1:8774\(\/v2\)\?|nova_url = http://$MY_PRIVATE_IP:8774/v2|g" /etc/neutron/neutron.conf
+sudo sed -i "s/# nova_admin_username =/nova_admin_username = nova/g" /etc/neutron/neutron.conf
+sudo sed -i "s/# nova_admin_tenant_id =/nova_admin_tenant_id = $SERVICE_TENANT_ID/g" /etc/neutron/neutron.conf
+sudo sed -i "s/# nova_admin_password =/nova_admin_password = notnova/g" /etc/neutron/neutron.conf
+sudo sed -i "s|# nova_admin_auth_url =|nova_admin_auth_url = http://$MY_PRIVATE_IP:35357/v2.0|g" /etc/neutron/neutron.conf
+sudo sed -i 's|service_provider=LOADBALANCER|#service_provider=LOADBALANCER|g' /etc/neutron/neutron.conf
+sudo sed -i 's|service_provider=VPN|#service_provider=VPN|g' /etc/neutron/neutron.conf
+
+# Configure Neutron ML2
+sudo sed -i 's|# type_drivers = local,flat,vlan,gre,vxlan|type_drivers = gre|g' /etc/neutron/plugins/ml2/ml2_conf.ini
+sudo sed -i 's|# tenant_network_types = local|tenant_network_types = gre|g' /etc/neutron/plugins/ml2/ml2_conf.ini
+sudo sed -i 's|# mechanism_drivers =|mechanism_drivers = openvswitch|g' /etc/neutron/plugins/ml2/ml2_conf.ini
+sudo sed -i 's|# tunnel_id_ranges =|tunnel_id_ranges = 1:1000|g' /etc/neutron/plugins/ml2/ml2_conf.ini
+sudo sed -i 's|# enable_security_group = True|firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver\nenable_security_group = True|g' /etc/neutron/plugins/ml2/ml2_conf.ini
+
+# Configure Neutron ML2 continued...
+( cat | sudo tee -a /etc/neutron/plugins/ml2/ml2_conf.ini ) <<EOF
+
+[ovs]
+local_ip = $MY_PRIVATE_IP
+tunnel_type = gre
+enable_tunneling = True
+EOF
+
+# Configure Neutron DHCP Agent
+sudo sed -i 's/# interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver/interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver/g' /etc/neutron/dhcp_agent.ini
+sudo sed -i 's/# dhcp_driver = neutron.agent.linux.dhcp.Dnsmasq/dhcp_driver = neutron.agent.linux.dhcp.Dnsmasq/g' /etc/neutron/dhcp_agent.ini
+sudo sed -i 's/# use_namespaces = True/use_namespaces = True/g' /etc/neutron/dhcp_agent.ini
+sudo sed -i 's/# enable_isolated_metadata = False/enable_isolated_metadata = True/g' /etc/neutron/dhcp_agent.ini
+sudo sed -i 's/# enable_metadata_network = False/enable_metadata_network = True/g' /etc/neutron/dhcp_agent.ini
+
+# Configure Neutron L3 Agent
+sudo sed -i 's/# interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver/interface_driver = neutron.agent.linux.interface.OVSInterfaceDriver/g' /etc/neutron/l3_agent.ini
+sudo sed -i 's/# use_namespaces = True/use_namespaces = True/g' /etc/neutron/l3_agent.ini
+
+# Configure Neutron Metadata Agent
+sudo sed -i "s/# nova_metadata_ip = 127.0.0.1/nova_metadata_ip = $MY_PRIVATE_IP/g" /etc/neutron/metadata_agent.ini
+sudo sed -i 's/# nova_metadata_port = 8775/nova_metadata_port = 8775/g' /etc/neutron/metadata_agent.ini
+sudo sed -i 's/# metadata_proxy_shared_secret =/metadata_proxy_shared_secret = openstack/g' /etc/neutron/metadata_agent.ini
+sudo sed -i "s|auth_url = http://localhost:5000/v2.0|auth_url = http://$MY_PRIVATE_IP:5000/v2.0|g" /etc/neutron/metadata_agent.ini
+sudo sed -i 's/%SERVICE_TENANT_NAME%/Services/g' /etc/neutron/metadata_agent.ini
+sudo sed -i 's/%SERVICE_USER%/neutron/g' /etc/neutron/metadata_agent.ini
+sudo sed -i 's/%SERVICE_PASSWORD%/notneutron/g' /etc/neutron/metadata_agent.ini
+
+# Create Open vSwitch integration bridge and external bridge
+sudo ovs-vsctl add-br br-int
+sudo ovs-vsctl add-br br-ex
+
+# Verify Open VSwitch bridges exist
+sudo ovs-vsctl show
+
+# Start Neutron
+sudo service neutron-server start
+
+# Wait for neutron-server to automatically run DB sync (please wait at least 30 seconds before proceeding)
+sleep 30
+
+# Start Neutron agents
+sudo service neutron-plugin-openvswitch-agent start
+sudo service neutron-dhcp-agent start
+sudo service neutron-l3-agent start
+sudo service neutron-metadata-agent start
+
+# Verify Neutron is running
+pgrep -l neutron
+
+# Verify Neutron Agents (Open vSwitch, L3, and DHCP) are functioning and checking in :-)
+neutron agent-list
+
+# Use 'user' credentials
+source ~/credentials/user
+
+# Create a network and subnet
+neutron net-create private
+PRIVATE_NET_ID=`neutron net-show private | awk '/ id / { print $4 }'`
+neutron subnet-create --name private-subnet1 $PRIVATE_NET_ID 10.0.0.0/29
+PRIVATE_SUBNET1_ID=`neutron subnet-show private-subnet1 | awk '/ id / { print $4 }'`
+
+# List network and subnet
+neutron net-list
+neutron subnet-list
+
+# Examine details of network and subnet
+neutron net-show $PRIVATE_NET_ID
+neutron subnet-show $PRIVATE_SUBNET1_ID
+
+cat >> ~/.bashrc <<EOF
+export PRIVATE_NET_ID=$PRIVATE_NET_ID
+export PRIVATE_SUBNET1_ID=$PRIVATE_SUBNET1_ID
+EOF

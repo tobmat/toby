@@ -1,0 +1,96 @@
+
+# Use 'user' credentials
+source ~/credentials/user
+
+# Create a Nova keypair. Nova generates keypair, retains the public key, and returns the private key.
+nova keypair-add MyKeypair > MyKeypair.pem
+
+# Change private key permissions
+chmod 600 MyKeypair.pem
+
+# Nova has been configured to force config drive attachment
+sudo grep -i force_config_drive /etc/nova/nova.conf
+
+# Boot an instance with forced config drive attachment
+nova boot --image cirros-qcow2 --flavor m1.tiny --key-name MyKeypair MyForceConfigDriveInstance
+
+# List instances, notice status of instance
+nova list
+
+# View console log of instance, notice config drive data source
+nova console-log MyForceConfigDriveInstance | grep datasource
+
+# Ping instance after status is active, and network is up
+MYFORCECONFIGDRIVEINSTANCE_IP=`nova show MyForceConfigDriveInstance | awk '/ private / { print $5 }'`
+sudo ip netns exec $PRIVATE_NETNS_ID ping -c 3 $MYFORCECONFIGDRIVEINSTANCE_IP
+
+# Log into instance
+sudo ssh-keygen -f "/root/.ssh/known_hosts" -R $MYFORCECONFIGDRIVEINSTANCE_IP
+sudo ip netns exec $PRIVATE_NETNS_ID ssh -i MyKeypair.pem cirros@$MYFORCECONFIGDRIVEINSTANCE_IP
+
+# List block devices, /dev/sr0 is the config drive
+sudo blkid
+
+# Mount config drive
+sudo mount /dev/sr0 /mnt
+
+# Examine contents of config drive
+cd /mnt/openstack/latest
+ls
+
+# Examine contents of meta_data.json
+cat meta_data.json
+
+# Log out of instance
+exit
+
+# Delete instance
+nova delete MyForceConfigDriveInstance
+
+# Disable force config drive
+sudo sed -i "s/force_config_drive=always/#force_config_drive=always/g" /etc/nova/nova.conf
+
+# Restart nova-compute
+sudo service nova-compute restart
+
+# Boot instance without config drive
+nova boot --image cirros-qcow2 --flavor m1.tiny --key-name MyKeypair MyMetadataInstance
+
+# List instances, notice status of instance
+nova list
+
+# View console log of instance
+nova console-log MyMetadataInstance | grep datasource
+
+# Ping instance after status is active, and network is up
+MYMETADATAINSTANCE_IP=`nova show MyMetadataInstance | awk '/ private / { print $5 }'`
+sudo ip netns exec $PRIVATE_NETNS_ID ping -c 3 $MYMETADATAINSTANCE_IP
+
+# Log into instance
+sudo ssh-keygen -f "/root/.ssh/known_hosts" -R $MYMETADATAINSTANCE_IP
+sudo ip netns exec $PRIVATE_NETNS_ID ssh -i MyKeypair.pem cirros@$MYMETADATAINSTANCE_IP
+
+# List block devices, notice the absence of a config drive
+sudo blkid
+
+# Show routes, notice route for EC2 Metadata (169.254.169.254)
+route -n
+
+# Query EC2 Metadata service
+curl http://169.254.169.254/latest/meta-data
+curl http://169.254.169.254/latest/meta-data/public-keys/0/openssh-key
+
+# Log out of instance
+exit
+
+# Delete instance
+nova delete MyMetadataInstance
+
+# List instance
+nova list
+
+# Reenable force config drive
+sudo sed -i "s/#force_config_drive=always/force_config_drive=always/g" /etc/nova/nova.conf
+
+# Restart nova-compute
+sudo service nova-compute restart

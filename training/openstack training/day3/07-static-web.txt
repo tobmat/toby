@@ -1,0 +1,57 @@
+
+# Use the 'admin' credentials
+source ~/credentials/admin
+
+# Create Assets
+cat > index.html <<EOF
+<h1>My Index</h1>
+EOF
+
+cat > 404error.html <<EOF
+<h1>My Error (404)</h1>
+EOF
+
+cat > listings.css <<EOF
+body {
+	background: #4A525A;
+	color: #DDD;
+}
+
+a {
+	color: #FFFF00;
+}
+EOF
+
+# Upload Assets
+swift upload testcontainer *.html *.css
+
+# Get Swift Proxy (API) Endpoint
+keystone catalog --service object-store
+
+# Point your browser to publicURL, including path to object
+# http://1.2.3.4:8080/v1/AUTH_YOUR_TENANT_ID/testcontainer/test.txt
+
+# Point your browser to publicURL, including path to container
+# http://1.2.3.4:8080/v1/AUTH_YOUR_TENANT_ID/testcontainer/
+
+# Enable Directory Listing
+swift post testcontainer -m 'web-listings: true'
+
+# Style Directory Listing
+swift post testcontainer -m 'web-listings-css: listings.css'
+
+# Set Default Index
+swift post testcontainer -m 'web-index: index.html'
+
+# Set 404 Error Page
+swift post testcontainer -m 'web-error: error.html'
+
+# View container
+swift stat testcontainer
+
+# Unset some properties
+swift post testcontainer -m 'web-index: '
+swift post testcontainer -m 'web-error: '
+
+# View container
+swift stat testcontainer

@@ -1,0 +1,63 @@
+
+# Use the 'admin' credentials
+source ~/credentials/admin
+
+# Get auth token from keystone
+keystone token-get
+AUTH_TOKEN=`keystone token-get | awk '/ id / { print $4 }'`
+
+# Get swift publicURL from keystone
+keystone catalog --service object-store
+STORAGE_URL=`keystone catalog --service object-store | awk '/ publicURL / { print $4 }'`
+
+# Create a container
+swift post documents
+
+# Create an additional container to hold previous versions
+swift post documents_versions
+
+# Enable object versioning for the documents container
+http POST $STORAGE_URL/documents X-Auth-Token:$AUTH_TOKEN X-Versions-Location:documents_versions
+
+# List properties of the documents container
+swift stat documents
+
+# Create an object
+cat > bucketlist.doc <<EOF
+My Bucket List
+==============
+[ ] Sky Dive
+EOF
+
+# Upload version 1 of object
+swift upload documents bucketlist.doc
+
+# Update object
+echo "[ ] Install Swift" >> bucketlist.doc
+
+# Upload version 2 of object
+swift upload documents bucketlist.doc
+
+# Update object
+echo "[ ] Eat Four Whole Fried Chickens, And A Coke" >> bucketlist.doc
+
+# Upload version 3 of object
+swift upload documents bucketlist.doc
+
+# List objects in container
+swift list documents
+
+# List previous versions
+swift list documents_versions
+
+# View current version of object
+swift download documents bucketlist.doc -o -
+
+# So maybe I'm having second thoughts about that last one
+swift delete documents bucketlist.doc
+
+# Verify previous version was restored
+swift download documents bucketlist.doc -o -
+
+# List previous versions
+swift list documents_versions

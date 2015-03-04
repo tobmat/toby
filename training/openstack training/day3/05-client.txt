@@ -1,0 +1,49 @@
+
+# Use the 'admin' credentials
+source ~/credentials/admin
+
+# Show stats (containers, objects, etc)
+swift stat
+
+# Create a container
+swift post testcontainer
+
+# Verify the container exists
+swift list
+
+# Upload an object to the container
+cat > test.txt <<EOF
+This is a test swift file...
+EOF
+
+swift upload testcontainer test.txt
+
+# Download (and view) the file
+swift download testcontainer test.txt -o -
+
+# Find your account ID
+swift stat
+ACCOUNT_ID=`swift stat | awk '/ Account: / { print $2 }'`
+
+# Where is our object located in swift?
+sudo swift-get-nodes /etc/swift/object.ring.gz $ACCOUNT_ID testcontainer test.txt
+
+# Calculate partition number - top 4 bytes of MD5 hash, shifted 23 bits (32 bits - partition power)
+python -c "import md5; from struct import unpack_from; print unpack_from('>I', md5.new('YOUR_RANDOM_PREFIX_SALT' + '/$ACCOUNT_ID/testcontainer/test.txt' + 'YOUR_RANDOM_SUFFIX_SALT').digest())[0] >> 23"
+PARTITION_NUMBER=`python -c "import md5; from struct import unpack_from; print unpack_from('>I', md5.new('YOUR_RANDOM_PREFIX_SALT' + '/$ACCOUNT_ID/testcontainer/test.txt' + 'YOUR_RANDOM_SUFFIX_SALT').digest())[0] >> 23"`
+
+# Examine the Ring data structure
+python -c "import pprint; from swift.common.ring import RingData; pprint.pprint(RingData.load('/etc/swift/object.ring.gz').to_dict())"
+
+# Find the storage devices assigned to your partition number
+python -c "import pprint; from swift.common.ring import RingData; pprint.pprint(RingData.load('/etc/swift/object.ring.gz').to_dict()['replica2part2dev_id'][0][$PARTITION_NUMBER])"
+python -c "import pprint; from swift.common.ring import RingData; pprint.pprint(RingData.load('/etc/swift/object.ring.gz').to_dict()['replica2part2dev_id'][1][$PARTITION_NUMBER])"
+python -c "import pprint; from swift.common.ring import RingData; pprint.pprint(RingData.load('/etc/swift/object.ring.gz').to_dict()['replica2part2dev_id'][2][$PARTITION_NUMBER])"
+PARTITION_REPLICA_1=`python -c "import pprint; from swift.common.ring import RingData; pprint.pprint(RingData.load('/etc/swift/object.ring.gz').to_dict()['replica2part2dev_id'][0][$PARTITION_NUMBER])"`
+PARTITION_REPLICA_2=`python -c "import pprint; from swift.common.ring import RingData; pprint.pprint(RingData.load('/etc/swift/object.ring.gz').to_dict()['replica2part2dev_id'][1][$PARTITION_NUMBER])"`
+PARTITION_REPLICA_3=`python -c "import pprint; from swift.common.ring import RingData; pprint.pprint(RingData.load('/etc/swift/object.ring.gz').to_dict()['replica2part2dev_id'][2][$PARTITION_NUMBER])"`
+
+# Loop up storage device information
+python -c "import pprint; from swift.common.ring import RingData; pprint.pprint(RingData.load('/etc/swift/object.ring.gz').to_dict()['devs'][$PARTITION_REPLICA_1])"
+python -c "import pprint; from swift.common.ring import RingData; pprint.pprint(RingData.load('/etc/swift/object.ring.gz').to_dict()['devs'][$PARTITION_REPLICA_2])"
+python -c "import pprint; from swift.common.ring import RingData; pprint.pprint(RingData.load('/etc/swift/object.ring.gz').to_dict()['devs'][$PARTITION_REPLICA_3])"

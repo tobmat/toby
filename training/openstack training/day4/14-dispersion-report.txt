@@ -1,0 +1,24 @@
+
+# Use the 'admin' credentials
+source ~/credentials/admin
+
+# Make the config file (see /usr/share/doc/swift/stats.conf-sample)
+( cat | sudo tee /etc/swift/dispersion.conf ) <<EOF
+[dispersion]
+auth_url = $OS_AUTH_URL
+auth_user = $OS_TENANT_NAME:$OS_USERNAME
+auth_key = $OS_PASSWORD
+auth_version = 2.0
+dispersion_coverage = 1.0
+concurrency = 7
+EOF
+
+# Set ownership and permissions
+sudo chown -R swift: /etc/swift
+sudo chmod 600 /etc/swift/dispersion.conf
+
+# populate the stats information
+sudo swift-dispersion-populate
+
+# run the dispersion report
+sudo swift-dispersion-report

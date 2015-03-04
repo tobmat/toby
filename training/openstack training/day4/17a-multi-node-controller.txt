@@ -1,0 +1,180 @@
+
+# Install Ubuntu Cloud Keyring and add Ubuntu Cloud Archive repository for Icehouse
+# Note: This has already been completed for you in this training environment.
+# sudo apt-get install -y ubuntu-cloud-keyring python-software-properties
+# sudo add-apt-repository -y cloud-archive:icehouse
+# sudo apt-get update
+
+# Get Node IP Addresses
+NODE_01_IP=`grep -i " n01" /etc/hosts | awk '{ print $1 }'`
+NODE_02_IP=`grep -i " n02" /etc/hosts | awk '{ print $1 }'`
+NODE_03_IP=`grep -i " n03" /etc/hosts | awk '{ print $1 }'`
+NODE_04_IP=`grep -i " n04" /etc/hosts | awk '{ print $1 }'`
+NODE_05_IP=`grep -i " n05" /etc/hosts | awk '{ print $1 }'`
+
+# Synchronize time
+sudo ntpdate -u training.rackspace.local
+
+# Preseed MySQL install
+cat <<EOF | sudo debconf-set-selections
+mysql-server-5.1 mysql-server/root_password password notmysql
+mysql-server-5.1 mysql-server/root_password_again password notmysql
+mysql-server-5.1 mysql-server/start_on_boot boolean true
+EOF
+
+# Install MySQL
+sudo apt-get install -y mysql-server python-mysqldb
+
+# Configure MySQL
+sudo sed -i "s/127.0.0.1/$MY_PRIVATE_IP\nskip-name-resolve\ncharacter-set-server = utf8\ncollation-server = utf8_general_ci\ninit-connect = 'SET NAMES utf8'/g" /etc/mysql/my.cnf
+
+# Restart MySQL
+sudo service mysql restart
+
+# Install Keystone - OpenStack Identity Service
+sudo apt-get install -y keystone
+
+# Stop Keystone
+sudo service keystone stop
+
+# Create Keystone database
+mysql -u root -pnotmysql -e "CREATE DATABASE keystone;"
+mysql -u root -pnotmysql -e "GRANT ALL ON keystone.* TO 'keystone'@'localhost' IDENTIFIED BY 'notkeystone';"
+mysql -u root -pnotmysql -e "GRANT ALL ON keystone.* TO 'keystone'@'%' IDENTIFIED BY 'notkeystone';"
+
+# Configure Keystone
+sudo sed -i "s|connection = sqlite:////var/lib/keystone/keystone.db|connection = mysql://keystone:notkeystone@$MY_PRIVATE_IP/keystone|g" /etc/keystone/keystone.conf
+sudo sed -i "s|#public_endpoint=http://localhost:%(public_port)s/|public_endpoint=http://$MY_PUBLIC_IP:%(public_port)s/|g" /etc/keystone/keystone.conf
+sudo sed -i "s|#admin_endpoint=http://localhost:%(admin_port)s/|admin_endpoint=http://$MY_PRIVATE_IP:%(admin_port)s/|g" /etc/keystone/keystone.conf
+
+# Initialize Keystone database
+sudo keystone-manage db_sync
+
+# Start Keystone
+sudo service keystone start
+
+# Export Keystone "admin" credentials to create first users and populate service catalog
+export SERVICE_TOKEN=ADMIN
+export SERVICE_ENDPOINT=http://$MY_PRIVATE_IP:35357/v2.0
+
+# Create new tenants (The services tenant will be used later when configuring each service to use keystone)
+keystone tenant-create --name MyProject
+TENANT_ID=`keystone tenant-get MyProject | awk '/ id / { print $4 }'`
+keystone tenant-create --name Services
+SERVICE_TENANT_ID=`keystone tenant-get Services | awk '/ id / { print $4 }'`
+
+# Create admin role
+keystone role-create --name admin
+ADMIN_ROLE_ID=`keystone role-get admin | awk '/ id / { print $4 }'`
+
+# Create new users
+keystone user-create --tenant-id $TENANT_ID --name myuser --pass mypassword
+MEMBER_USER_ID=`keystone user-get myuser | awk '/ id / { print $4 }'`
+keystone user-create --tenant-id $TENANT_ID --name myadmin --pass mypassword
+ADMIN_USER_ID=`keystone user-get myadmin | awk '/ id / { print $4 }'`
+
+# Grant admin role
+keystone user-role-add --user-id $ADMIN_USER_ID --tenant-id $TENANT_ID --role-id $ADMIN_ROLE_ID
+
+# Populate service in service catalog
+keystone service-create --name=keystone --type=identity --description="Keystone Identity Service"
+KEYSTONE_SVC_ID=`keystone service-get keystone | awk '/ id / { print $4 }'`
+
+# Populate endpoint in service catalog
+keystone endpoint-create --region RegionOne --service-id=$KEYSTONE_SVC_ID --publicurl=http://$MY_PUBLIC_IP:5000/v2.0 --internalurl=http://$MY_PRIVATE_IP:5000/v2.0 --adminurl=http://$MY_PRIVATE_IP:35357/v2.0
+
+# Create Swift service user
+keystone user-create --tenant-id $SERVICE_TENANT_ID --name swift --pass notswift
+SWIFT_USER_ID=`keystone user-get swift | awk '/ id / { print $4 }'`
+
+# Grant 'admin' role to Swift service user
+keystone user-role-add --user-id $SWIFT_USER_ID --tenant-id $SERVICE_TENANT_ID --role-id $ADMIN_ROLE_ID
+
+# Populate service in service catalog
+keystone service-create --name=swift --type=object-store --description="Swift Object Storage Service"
+SWIFT_SVC_ID=`keystone service-get swift | awk '/ id / { print $4 }'`
+
+# Populate endpoint in service catalog
+keystone endpoint-create --region RegionOne --service-id=$SWIFT_SVC_ID --publicurl="http://$MY_PUBLIC_IP:8080/v1/AUTH_%(tenant_id)s" --internalurl="http://$MY_PRIVATE_IP:8080/v1/AUTH_%(tenant_id)s" --adminurl=http://$MY_PRIVATE_IP:8080/v1
+
+# The Keystone "admin" credentials are no longer needed
+unset SERVICE_TOKEN
+unset SERVICE_ENDPOINT
+
+# Verify Keystone is functioning
+http --verbose http://$MY_PRIVATE_IP:5000/v2.0/tokens auth:='{"tenantName": "MyProject", "passwordCredentials": {"username": "myuser", "password": "mypassword"}}' Content-type:application/json
+http --verbose http://$MY_PRIVATE_IP:5000/v2.0/tokens auth:='{"tenantName": "MyProject", "passwordCredentials": {"username": "myadmin", "password": "mypassword"}}' Content-type:application/json
+
+# Create 'user' and 'admin' credentials
+mkdir ~/credentials
+
+cat >> ~/credentials/user <<EOF
+export OS_USERNAME=myuser
+export OS_PASSWORD=mypassword
+export OS_TENANT_NAME=MyProject
+export OS_AUTH_URL=http://$MY_PRIVATE_IP:5000/v2.0/
+export OS_REGION_NAME=RegionOne
+EOF
+
+cat >> ~/credentials/admin <<EOF
+export OS_USERNAME=myadmin
+export OS_PASSWORD=mypassword
+export OS_TENANT_NAME=MyProject
+export OS_AUTH_URL=http://$MY_PRIVATE_IP:5000/v2.0/
+export OS_REGION_NAME=RegionOne
+EOF
+
+# Use 'admin' credentials
+source ~/credentials/admin
+
+cat >> ~/.bashrc <<EOF
+export SERVICE_TENANT_ID=$SERVICE_TENANT_ID
+export ADMIN_ROLE_ID=$ADMIN_ROLE_ID
+EOF
+
+# Install HAProxy
+sudo apt-get install -y haproxy
+
+# Enable HAProxy
+sudo sed -i "s/ENABLED=0/ENABLED=1/g" /etc/default/haproxy
+
+# Configure HAProxy
+( cat | sudo tee /etc/haproxy/haproxy.cfg ) <<EOF
+global
+        maxconn 4096
+        user haproxy
+        group haproxy
+        daemon
+
+defaults
+        log     global
+        mode    http
+        option  httplog
+        option  dontlognull
+        retries 3
+        option  redispatch
+        maxconn 2000
+        contimeout    5000
+        clitimeout    50000
+        srvtimeout    50000
+
+listen swift-cluster
+        bind    0.0.0.0:8080
+        mode    http
+        stats   enable
+        stats   auth openstack:openstack
+        balance roundrobin
+        option  httpchk HEAD /healthcheck HTTP/1.0
+        option  forwardfor
+        option  httpclose
+        server  proxy-n02 $NODE_02_IP:8080 weight 5 check inter 2000
+        server  proxy-n03 $NODE_03_IP:8080 weight 5 check inter 2000
+        server  proxy-n04 $NODE_04_IP:8080 weight 5 check inter 2000
+        server  proxy-n05 $NODE_05_IP:8080 weight 5 check inter 2000
+EOF
+
+# Start Keystone
+sudo service haproxy restart
+
+# Install Swift Client
+sudo apt-get install -y python-swiftclient

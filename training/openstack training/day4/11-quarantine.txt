@@ -1,0 +1,46 @@
+
+# Use the 'admin' credentials
+source ~/credentials/admin
+
+# Find your account ID
+swift stat
+ACCOUNT_ID=`swift stat | awk '/ Account: / { print $2 }'`
+
+# Find locations of object
+sudo swift-get-nodes /etc/swift/object.ring.gz $ACCOUNT_ID testcontainer test.txt
+
+# Change to the location of your object
+cd /srv/node/<primary-storage-device>/objects/<path-to-object>
+
+# View contents of object
+sudo cat *.data
+
+# Calculate MD5 sum of object
+sudo md5sum *.data
+
+# View xattrs of object, notice MD5 sum is the eTag
+sudo xattr -l *.data
+
+# Lets "corrupt" our object
+echo "CORRUPT ME" | sudo tee *.data
+
+# Change to the root of the storage location
+cd /srv/node/<primary-storage-device>
+
+# Wait for object to be quarantined
+ls
+
+# View quarantined objects
+cd /srv/node/<primary-storage-device>/quarantined/objects/<path-to-object>
+
+# View content of quarantined object
+sudo cat *.data
+
+# Change back to the location of your object
+cd /srv/node/<primary-storage-device>/objects/<path-to-object>
+
+# View contents of restored object
+sudo cat *.data
+
+# Navigate back to home directory
+cd

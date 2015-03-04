@@ -1,0 +1,193 @@
+
+# Install Nova - OpenStack Compute Service
+sudo apt-get install -y nova-api nova-scheduler nova-conductor nova-cert nova-consoleauth nova-novncproxy nova-compute
+
+# Check if host supports KVM
+sudo kvm-ok
+
+# If host supports KVM, ensure Kernel Modules are loaded
+sudo modprobe kvm
+sudo modprobe kvm_intel
+cat <<EOF | sudo tee -a /etc/modules
+kvm
+kvm_intel
+EOF
+
+# If host doesn't support KVM, install QEMU
+# sudo apt-get install -y nova-compute-qemu
+
+# Stop Nova
+sudo service nova-api stop
+sudo service nova-scheduler stop
+sudo service nova-conductor stop
+sudo service nova-cert stop
+sudo service nova-consoleauth stop
+sudo service nova-novncproxy stop
+sudo service nova-compute stop
+
+# Create Nova database
+mysql -u root -pnotmysql -e "CREATE DATABASE nova;"
+mysql -u root -pnotmysql -e "GRANT ALL ON nova.* TO 'nova'@'localhost' IDENTIFIED BY 'notnova';"
+mysql -u root -pnotmysql -e "GRANT ALL ON nova.* TO 'nova'@'%' IDENTIFIED BY 'notnova';"
+
+# Use 'admin' credentials
+source ~/credentials/admin
+
+# Create Nova service user
+keystone user-create --tenant-id $SERVICE_TENANT_ID --name nova --pass notnova
+NOVA_USER_ID=`keystone user-get nova | awk '/ id / { print $4 }'`
+
+# Grant 'admin' role to Nova service user
+keystone user-role-add --user-id $NOVA_USER_ID --tenant-id $SERVICE_TENANT_ID --role-id $ADMIN_ROLE_ID
+
+# List service users and roles
+keystone user-list --tenant-id $SERVICE_TENANT_ID
+keystone user-role-list --tenant-id $SERVICE_TENANT_ID --user-id $NOVA_USER_ID
+
+# Populate service in service catalog
+keystone service-create --name=nova --type=compute --description="Nova Compute Service"
+NOVA_SVC_ID=`keystone service-get nova | awk '/ id / { print $4 }'`
+
+# Populate endpoint in service catalog
+keystone endpoint-create --region RegionOne --service-id=$NOVA_SVC_ID --publicurl="http://$MY_PUBLIC_IP:8774/v2/%(tenant_id)s" --internalurl="http://$MY_PRIVATE_IP:8774/v2/%(tenant_id)s" --adminurl="http://$MY_PRIVATE_IP:8774/v2/%(tenant_id)s"
+
+# List new services
+keystone service-list
+
+# List new endpoints
+keystone endpoint-list
+
+# Configure Nova
+cat <<EOF | sudo tee -a /etc/nova/nova.conf
+network_api_class=nova.network.neutronv2.api.API
+neutron_url=http://$MY_PRIVATE_IP:9696
+neutron_auth_strategy=keystone
+neutron_admin_tenant_name=Services
+neutron_admin_username=neutron
+neutron_admin_password=notneutron
+neutron_admin_auth_url=http://$MY_PRIVATE_IP:35357/v2.0
+firewall_driver=nova.virt.firewall.NoopFirewallDriver
+security_group_api=neutron
+linuxnet_interface_driver=nova.network.linux_net.LinuxOVSInterfaceDriver
+rabbit_host=$MY_PRIVATE_IP
+glance_host=$MY_PRIVATE_IP
+auth_strategy=keystone
+force_config_drive=always
+my_ip=$MY_PRIVATE_IP
+fixed_ip_disassociate_timeout=30
+enable_instance_password=False
+service_neutron_metadata_proxy=True
+neutron_metadata_proxy_shared_secret=openstack
+novncproxy_base_url=http://$MY_PUBLIC_IP:6080/vnc_auto.html
+vncserver_proxyclient_address=$MY_PRIVATE_IP
+vncserver_listen=0.0.0.0
+
+[database]
+connection=mysql://nova:notnova@$MY_PRIVATE_IP/nova
+
+[keystone_authtoken]
+auth_uri = http://$MY_PRIVATE_IP:5000
+auth_host = $MY_PRIVATE_IP
+auth_port = 35357
+auth_protocol = http
+admin_tenant_name = Services
+admin_user = nova
+admin_password = notnova
+EOF
+
+# Initialize Nova database
+sudo nova-manage db sync
+
+# Start Nova
+sudo service nova-api start
+sudo service nova-scheduler start
+sudo service nova-conductor start
+sudo service nova-cert start
+sudo service nova-consoleauth start
+sudo service nova-novncproxy start
+sudo service nova-compute start
+
+# Verify Nova is running
+pgrep -l nova
+
+# Verify Nova services are functioning and checking in :-)
+nova service-list
+
+# Use 'user' credentials
+source ~/credentials/user
+
+# List images
+nova image-list
+
+# List flavors
+nova flavor-list
+
+# Boot an instance using flavor and image names (if names are unique)
+nova boot --image cirros-qcow2 --flavor m1.tiny MyFirstInstance
+MYFIRSTINSTANCE_ID=`nova show MyFirstInstance | awk '/ id / { print $4 }'`
+
+# Boot an instance using flavor and image IDs
+nova boot --image $IMAGE1_ID --flavor 1 MySecondInstance
+
+# List instances, notice status of instance
+nova list
+
+# Show details of instance
+nova show MyFirstInstance
+
+# View console log of instance
+nova console-log MyFirstInstance
+
+# Update default security group to allow host access to guest subnet
+neutron security-group-rule-create --direction ingress --ethertype IPv4 --protocol tcp --port-range-min 22 --port-range-max 22 --remote-ip-prefix 10.0.0.0/24 default
+neutron security-group-rule-create --direction ingress --ethertype IPv4 --protocol icmp --remote-ip-prefix 10.0.0.0/24 default
+
+# Get network namespace (ie, qdhcp-5ab46e23-118a-4cad-9ca8-51d56a5b6b8c)
+sudo ip netns
+PRIVATE_NETNS_ID=qdhcp-$PRIVATE_NET_ID
+
+# Examine network configuration inside of namespace
+sudo ip netns exec $PRIVATE_NETNS_ID ip addr
+
+# Ping first instance after status is active, and network is up
+sudo ip netns exec $PRIVATE_NETNS_ID ping -c 3 10.0.0.2
+
+# Log into instance ( username is 'cirros', password is 'cubswin:)' )
+### Toby - first command deletes cache file if exist for clean connection every time.
+sudo ssh-keygen -f "/root/.ssh/known_hosts" -R 10.0.0.2
+sudo ip netns exec $PRIVATE_NETNS_ID ssh cirros@10.0.0.2
+
+# Ping second instance from first instance
+ping -c 3 10.0.0.4
+
+# Log into second instance from first instance ( username is 'cirros', password is 'cubswin:)' )
+ssh cirros@10.0.0.4
+
+# Log out of second instance
+exit
+
+# Log out of first instance
+exit
+
+# Use virsh to talk directly to libvirt
+sudo virsh list --all
+
+# Examine active instance
+ll /var/lib/nova/instances/$MYFIRSTINSTANCE_ID
+sudo cat /var/lib/nova/instances/$MYFIRSTINSTANCE_ID/console.log
+sudo cat /var/lib/nova/instances/$MYFIRSTINSTANCE_ID/libvirt.xml
+
+# Examine cached base image
+ll /var/lib/nova/instances/_base
+qemu-img info /var/lib/nova/instances/_base/*
+
+# Delete instances
+nova delete MyFirstInstance
+nova delete MySecondInstance
+
+# List instances, notice status of instance
+nova list
+
+cat >> ~/.bashrc <<EOF
+export PRIVATE_NETNS_ID=$PRIVATE_NETNS_ID
+EOF

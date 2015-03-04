@@ -1,0 +1,124 @@
+
+### Toby - need to change from cat ~/.bashrc 
+### Add these values to .bashrc file
+export MY_NODE_ID=10
+export MY_IP=192.168.2.10
+export MY_PRIVATE_IP=192.168.2.10
+export MY_PUBLIC_IP=192.168.2.10
+export MY_PUBLIC_SUBNET_CIDR=172.16.0.72/29
+
+# Install Keystone - OpenStack Identity Service
+sudo apt-get install -y keystone
+
+# Verify version of OpenStack (Icehouse == 2014.1)
+sudo dpkg -p keystone | grep "Version:"
+
+# Stop Keystone
+sudo service keystone stop
+
+# Create Keystone database
+mysql -u root -pnotmysql -e "CREATE DATABASE keystone;"
+mysql -u root -pnotmysql -e "GRANT ALL ON keystone.* TO 'keystone'@'localhost' IDENTIFIED BY 'notkeystone';"
+mysql -u root -pnotmysql -e "GRANT ALL ON keystone.* TO 'keystone'@'%' IDENTIFIED BY 'notkeystone';"
+
+# Configure Keystone
+### Toby - change to use mysql db
+sudo sed -i "s|connection = sqlite:////var/lib/keystone/keystone.db|connection = mysql://keystone:notkeystone@$MY_PRIVATE_IP/keystone|g" /etc/keystone/keystone.conf
+sudo sed -i "s|#public_endpoint=http://localhost:%(public_port)s/|public_endpoint=http://$MY_PUBLIC_IP:%(public_port)s/|g" /etc/keystone/keystone.conf
+sudo sed -i "s|#admin_endpoint=http://localhost:%(admin_port)s/|admin_endpoint=http://$MY_PRIVATE_IP:%(admin_port)s/|g" /etc/keystone/keystone.conf
+
+# Initialize Keystone database
+sudo keystone-manage db_sync
+
+# Start Keystone
+sudo service keystone start
+
+# Verify Keystone is running
+pgrep -l keystone
+
+# Export Keystone "admin" credentials to create first users and populate service catalog
+export SERVICE_TOKEN=ADMIN
+export SERVICE_ENDPOINT=http://$MY_PRIVATE_IP:35357/v2.0
+
+# Create new tenants (The services tenant will be used later when configuring each service to use keystone)
+keystone tenant-create --name MyProject
+TENANT_ID=`keystone tenant-get MyProject | awk '/ id / { print $4 }'`
+keystone tenant-create --name Services
+SERVICE_TENANT_ID=`keystone tenant-get Services | awk '/ id / { print $4 }'`
+
+# Create admin role
+### Toby - roles created outside of tenant but assigned in them
+keystone role-create --name admin
+ADMIN_ROLE_ID=`keystone role-get admin | awk '/ id / { print $4 }'`
+
+# Create new users
+### Toby - these are for horizon access too
+keystone user-create --tenant-id $TENANT_ID --name myuser --pass mypassword
+MEMBER_USER_ID=`keystone user-get myuser | awk '/ id / { print $4 }'`
+keystone user-create --tenant-id $TENANT_ID --name myadmin --pass mypassword
+ADMIN_USER_ID=`keystone user-get myadmin | awk '/ id / { print $4 }'`
+
+# Grant admin role
+keystone user-role-add --user-id $ADMIN_USER_ID --tenant-id $TENANT_ID --role-id $ADMIN_ROLE_ID
+
+# List new tenants and roles
+keystone tenant-list
+keystone role-list
+
+# List users on a tenant
+keystone user-list --tenant-id $TENANT_ID
+
+# List roles assigned to user
+keystone user-role-list --tenant-id $TENANT_ID --user-id $MEMBER_USER_ID
+keystone user-role-list --tenant-id $TENANT_ID --user-id $ADMIN_USER_ID
+
+# Populate service in service catalog
+keystone service-create --name=keystone --type=identity --description="Keystone Identity Service"
+KEYSTONE_SVC_ID=`keystone service-get keystone | awk '/ id / { print $4 }'`
+
+# Populate endpoint in service catalog
+keystone endpoint-create --region RegionOne --service-id=$KEYSTONE_SVC_ID --publicurl=http://$MY_PUBLIC_IP:5000/v2.0 --internalurl=http://$MY_PRIVATE_IP:5000/v2.0 --adminurl=http://$MY_PRIVATE_IP:35357/v2.0
+
+# List new services
+keystone service-list
+
+# List new endpoints
+keystone endpoint-list
+
+# Show presence of Keystone v3 API by listing domains
+http --verbose http://$MY_PRIVATE_IP:35357/v3/domains X-Auth-Token:$SERVICE_TOKEN Content-type:application/json
+
+# The Keystone "admin" credentials are no longer needed
+unset SERVICE_TOKEN
+unset SERVICE_ENDPOINT
+
+# Verify Keystone is functioning
+http --verbose http://$MY_PRIVATE_IP:5000/v2.0/tokens auth:='{"tenantName": "MyProject", "passwordCredentials": {"username": "myuser", "password": "mypassword"}}' Content-type:application/json
+http --verbose http://$MY_PRIVATE_IP:5000/v2.0/tokens auth:='{"tenantName": "MyProject", "passwordCredentials": {"username": "myadmin", "password": "mypassword"}}' Content-type:application/json
+
+# Create 'user' and 'admin' credentials
+mkdir ~/credentials
+
+cat >> ~/credentials/user <<EOF
+export OS_USERNAME=myuser
+export OS_PASSWORD=mypassword
+export OS_TENANT_NAME=MyProject
+export OS_AUTH_URL=http://$MY_PRIVATE_IP:5000/v2.0/
+export OS_REGION_NAME=RegionOne
+EOF
+
+cat >> ~/credentials/admin <<EOF
+export OS_USERNAME=myadmin
+export OS_PASSWORD=mypassword
+export OS_TENANT_NAME=MyProject
+export OS_AUTH_URL=http://$MY_PRIVATE_IP:5000/v2.0/
+export OS_REGION_NAME=RegionOne
+EOF
+
+# Use 'admin' credentials
+source ~/credentials/admin
+
+cat >> ~/.bashrc <<EOF
+export SERVICE_TENANT_ID=$SERVICE_TENANT_ID
+export ADMIN_ROLE_ID=$ADMIN_ROLE_ID
+EOF

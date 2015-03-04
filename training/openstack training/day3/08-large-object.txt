@@ -1,0 +1,46 @@
+
+# Use the 'admin' credentials
+source ~/credentials/admin
+
+# Create a "large" file
+cat > large.txt <<EOF
+This is a large swift file...
+EOF
+
+# Upload file using 4 byte segments
+swift upload testcontainer large.txt -S 4
+
+# Download object as a single file
+### Toby - -o is for output, then the - outputs to standard out.
+swift download testcontainer large.txt -o -
+
+# Where is swift storing the segments? Notice the new testcontainer_segments container
+swift list
+swift list testcontainer_segments
+
+# How is swift reassembling the segments? Notice the manifest header
+swift stat testcontainer large.txt
+
+# Find your account ID
+swift stat
+ACCOUNT_ID=`swift stat | awk '/ Account: / { print $2 }'`
+
+# Examine one of the segments
+sudo swift-get-nodes /etc/swift/object.ring.gz $ACCOUNT_ID testcontainer_segments <segment-object-name>
+sudo cat /srv/node/<primary-stroage-device>/objects/<path-to-object>
+
+# Create a 100 megabyte file
+dd if=/dev/zero of=real_large.txt bs=1M count=100
+
+# Upload file using 10 megabyte segments
+swift upload testcontainer real_large.txt -S 10485760
+
+# Examine segments and manifest file
+swift list testcontainer_segments
+swift stat testcontainer real_large.txt
+
+# Download object as a single file
+swift download testcontainer real_large.txt -o real_large2.txt
+
+# Compare original, and segmented file just downloaded
+md5sum real_large.txt real_large2.txt

@@ -1,0 +1,19 @@
+
+# Create drive-audit configuration
+( cat | sudo tee /etc/swift/drive-audit.conf ) <<EOF
+[drive-audit]
+device_dir = /srv/node
+log_facility = LOG_LOCAL0
+log_level = INFO
+minutes = 60
+error_limit = 2
+log_file_pattern = /var/log/kern*
+regex_pattern_1 = \berror\b.*\b(loop[0-9]{1,2}\d?)\b
+regex_pattern_2 = \b(loop[0-9]{1,2}\d?)\b.*\berror\b
+EOF
+
+# Ensure configuration is owned by swift
+sudo chown -R swift: /etc/swift
+
+# Create cron job
+echo "15 * * * * root /usr/bin/swift-drive-audit /etc/swift/drive-audit.conf" | sudo tee /etc/cron.d/swift-drive-audit

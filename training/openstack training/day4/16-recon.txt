@@ -1,0 +1,38 @@
+
+# Configure recon
+sudo sed -i /etc/swift/object-server.conf -e 's/pipeline = object-server/pipeline = recon object-server/g'
+sudo sed -i /etc/swift/container-server.conf -e 's/pipeline = container-server/pipeline = recon container-server/g'
+sudo sed -i /etc/swift/account-server.conf -e 's/pipeline = account-server/pipeline = recon account-server/g'
+
+( cat | sudo tee -a /etc/swift/object-server.conf ) <<EOF
+
+[filter:recon]
+use = egg:swift#recon
+recon_cache_path = /var/cache/swift
+
+EOF
+
+( cat | sudo tee -a /etc/swift/container-server.conf ) <<EOF
+
+[filter:recon]
+use = egg:swift#recon
+recon_cache_path = /var/cache/swift
+
+EOF
+
+( cat | sudo tee -a /etc/swift/account-server.conf ) <<EOF
+
+[filter:recon]
+use = egg:swift#recon
+recon_cache_path = /var/cache/swift
+
+EOF
+
+# Create cron job
+echo "*/5 * * * * swift /usr/bin/swift-recon-cron /etc/swift/object-server.conf" | sudo tee /etc/cron.d/swift-recon
+
+# Restart the swift services
+sudo swift-init all restart
+
+# Run Swift Recon
+watch -n 1 swift-recon --all

@@ -1,0 +1,208 @@
+
+# Use 'admin' credentials
+source ~/credentials/admin
+
+# Create Swift service user
+keystone user-create --tenant-id $SERVICE_TENANT_ID --name swift --pass notswift
+SWIFT_USER_ID=`keystone user-get swift | awk '/ id / { print $4 }'`
+
+# Grant 'admin' role to Swift service user
+keystone user-role-add --user-id $SWIFT_USER_ID --tenant-id $SERVICE_TENANT_ID --role-id $ADMIN_ROLE_ID
+
+# List service users and roles
+keystone user-list --tenant-id $SERVICE_TENANT_ID
+keystone user-role-list --tenant-id $SERVICE_TENANT_ID --user-id $SWIFT_USER_ID
+
+# Populate service in service catalog
+keystone service-create --name=swift --type=object-store --description="Swift Object Storage Service"
+SWIFT_SVC_ID=`keystone service-get swift | awk '/ id / { print $4 }'`
+
+# Populate endpoint in service catalog
+keystone endpoint-create --region RegionOne --service-id=$SWIFT_SVC_ID --publicurl="http://$MY_PUBLIC_IP:8080/v1/AUTH_%(tenant_id)s" --internalurl="http://$MY_PRIVATE_IP:8080/v1/AUTH_%(tenant_id)s" --adminurl=http://$MY_PRIVATE_IP:8080/v1
+
+# List new services
+keystone service-list
+
+# List new endpoints
+keystone endpoint-list
+
+# Install Swift dependencies
+sudo apt-get install -y --force-yes xfsprogs memcached python-memcache python-webob python-keystone
+
+# Install Swift - OpenStack Object Storage
+sudo apt-get install -y swift swift-account swift-container swift-object swift-object-expirer swift-proxy python-swiftclient
+
+# Stop Swift
+sudo swift-init all stop
+
+# Create the swift cache and keystone-signing diectories
+sudo mkdir -p /var/cache/swift/keystone-signing
+
+# Ensure swift owns everything in it's cache directory
+sudo chown -R swift: /var/cache/swift
+
+# Set up the filesystems
+sudo mkfs.xfs -f -i size=1024 /dev/loop2
+sudo mkfs.xfs -f -i size=1024 /dev/loop3
+sudo mkfs.xfs -f -i size=1024 /dev/loop4
+sudo mkfs.xfs -f -i size=1024 /dev/loop5
+sudo mkfs.xfs -f -i size=1024 /dev/loop6
+sudo mkfs.xfs -f -i size=1024 /dev/loop7
+
+# Create the mount points
+sudo mkdir -p /srv/node/loop{2,3,4,5,6,7}
+
+# Setup drives to be mounted in /etc/fstab (notice noauto)
+### Toby - noauto used because using loop devices
+( cat | sudo tee -a /etc/fstab ) <<EOF
+/dev/loop2 /srv/node/loop2 xfs noauto,noatime,nodiratime,nobarrier,logbufs=8 0 0
+/dev/loop3 /srv/node/loop3 xfs noauto,noatime,nodiratime,nobarrier,logbufs=8 0 0
+/dev/loop4 /srv/node/loop4 xfs noauto,noatime,nodiratime,nobarrier,logbufs=8 0 0
+/dev/loop5 /srv/node/loop5 xfs noauto,noatime,nodiratime,nobarrier,logbufs=8 0 0
+/dev/loop6 /srv/node/loop6 xfs noauto,noatime,nodiratime,nobarrier,logbufs=8 0 0
+/dev/loop7 /srv/node/loop7 xfs noauto,noatime,nodiratime,nobarrier,logbufs=8 0 0
+EOF
+
+# Mount the drives now
+sudo mount /srv/node/loop2
+sudo mount /srv/node/loop3
+sudo mount /srv/node/loop4
+sudo mount /srv/node/loop5
+sudo mount /srv/node/loop6
+sudo mount /srv/node/loop7
+
+# Mount the drives at boot
+### Toby - rc.local runs at boot time in linux
+( cat | sudo tee /etc/rc.local ) <<EOF
+#!/bin/sh -e
+
+mount /srv/node/loop2
+mount /srv/node/loop3
+mount /srv/node/loop4
+mount /srv/node/loop5
+mount /srv/node/loop6
+mount /srv/node/loop7
+
+exit 0
+EOF
+
+# Ensure swift user owns everything
+sudo chown -R swift: /srv/node
+
+# Configure rsync
+sudo sed -i 's/RSYNC_ENABLE=false/RSYNC_ENABLE=true/g' /etc/default/rsync
+
+( cat | sudo tee /etc/rsyncd.conf ) <<EOF
+uid = swift
+gid = swift
+log file = /var/log/rsyncd.log
+pid file = /var/run/rsyncd.pid
+address = 0.0.0.0
+
+[account]
+max connections = 25
+path = /srv/node/
+read only = false
+lock file = /var/lock/account.lock
+
+[container]
+max connections = 25
+path = /srv/node/
+read only = false
+lock file = /var/lock/container.lock
+
+[object]
+max connections = 25
+path = /srv/node/
+read only = false
+lock file = /var/lock/object.lock
+EOF
+
+# Restart rsync
+sudo service rsync restart
+
+# Configure memcached
+sudo sed -i 's/-l 127.0.0.1/-l 0.0.0.0/g' /etc/memcached.conf
+
+# Restart memcached
+sudo service memcached restart
+
+# Configure swift
+### Toby - in prod environment prefix and suffix would be kept secret
+( cat | sudo tee /etc/swift/swift.conf ) <<EOF
+[swift-hash]
+swift_hash_path_prefix = YOUR_RANDOM_PREFIX_SALT
+swift_hash_path_suffix = YOUR_RANDOM_SUFFIX_SALT
+EOF
+
+( cat | sudo tee /etc/swift/proxy-server.conf ) <<EOF
+[DEFAULT]
+bind_port = 8080
+user = swift
+
+[pipeline:main]
+pipeline = catch_errors healthcheck cache authtoken keystoneauth staticweb proxy-logging proxy-server
+
+[filter:catch_errors]
+use = egg:swift#catch_errors
+
+[filter:healthcheck]
+use = egg:swift#healthcheck
+
+[filter:cache]
+use = egg:swift#memcache
+memcache_servers = $MY_PRIVATE_IP:11211
+
+[filter:authtoken]
+paste.filter_factory = keystoneclient.middleware.auth_token:filter_factory
+# Delaying the auth decision is required to support token-less
+# usage for anonymous referrers ('.r:*') or for tempurl/formpost
+# middleware.
+delay_auth_decision = true
+auth_host = $MY_PRIVATE_IP
+auth_port = 35357
+auth_protocol = http
+auth_uri = http://$MY_PRIVATE_IP:5000/
+admin_tenant_name = Services
+admin_user = swift
+admin_password = notswift
+signing_dir = /var/cache/swift/keystone-signing
+
+[filter:keystoneauth]
+use = egg:swift#keystoneauth
+operator_roles = admin,swiftoperator
+
+[filter:staticweb]
+use = egg:swift#staticweb
+
+[filter:proxy-logging]
+use = egg:swift#proxy_logging
+
+[app:proxy-server]
+use = egg:swift#proxy
+account_autocreate = true
+
+EOF
+
+( cat | sudo tee /etc/swift/object-expirer.conf ) <<EOF
+[DEFAULT]
+
+[object-expirer]
+interval = 300
+
+[pipeline:main]
+pipeline = catch_errors cache proxy-server
+
+[app:proxy-server]
+use = egg:swift#proxy
+
+[filter:cache]
+use = egg:swift#memcache
+memcache_servers = $MY_PRIVATE_IP:11211
+
+[filter:catch_errors]
+use = egg:swift#catch_errors
+
+EOF
+
+sudo sed -i /etc/swift/container-server.conf -e 's/workers = 2/workers = 2\nallow_versions = true/'

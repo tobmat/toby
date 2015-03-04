@@ -1,0 +1,17 @@
+
+# Install Horizon dependencies
+### Toby - allows caching of keystone tokens to minimize request.
+sudo apt-get install -y memcached
+
+# Install Horizon - OpenStack Dashboard
+sudo apt-get install -y openstack-dashboard
+
+# Remove Horizon Ubuntu theme
+### Toby - customized screen from horizon
+sudo apt-get remove -y --purge openstack-dashboard-ubuntu-theme
+
+# Restart Horizon (Apache)
+### Toby - only needed if doing previous step
+sudo service apache2 restart
+
+# Point your browser to http://$MY_PUBLIC_IP/horizon

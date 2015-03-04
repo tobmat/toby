@@ -1,0 +1,237 @@
+
+# Install Cinder - OpenStack Volume Service
+### Toby - would need to install open-iscsi and tgt (iscsi server)
+sudo apt-get install -y cinder-api cinder-scheduler cinder-volume
+
+# Stop Cinder, Open iSCSI, and TGT
+sudo service cinder-api stop
+sudo service cinder-scheduler stop
+sudo service cinder-volume stop
+sudo service open-iscsi stop
+sudo service tgt stop
+
+# Create Cinder database
+mysql -u root -pnotmysql -e "CREATE DATABASE cinder;"
+mysql -u root -pnotmysql -e "GRANT ALL ON cinder.* TO 'cinder'@'localhost' IDENTIFIED BY 'notcinder';"
+mysql -u root -pnotmysql -e "GRANT ALL ON cinder.* TO 'cinder'@'%' IDENTIFIED BY 'notcinder';"
+
+# Use 'admin' credentials
+source ~/credentials/admin
+
+# Create Cinder service user
+keystone user-create --tenant-id $SERVICE_TENANT_ID --name cinder --pass notcinder
+CINDER_USER_ID=`keystone user-get cinder | awk '/ id / { print $4 }'`
+
+# Grant `admin` role to Cinder service user
+keystone user-role-add --user-id $CINDER_USER_ID --tenant-id $SERVICE_TENANT_ID --role-id $ADMIN_ROLE_ID
+
+# List service users and roles
+keystone user-list --tenant-id $SERVICE_TENANT_ID
+keystone user-role-list --tenant-id $SERVICE_TENANT_ID --user-id $CINDER_USER_ID
+
+# Populate service in service catalog
+keystone service-create --name=cinder --type=volume --description="Cinder Volume Service"
+CINDER_SVC_ID=`keystone service-get cinder | awk '/ id / { print $4 }'`
+
+# Populate endpoint in service catalog
+keystone endpoint-create --region RegionOne --service-id=$CINDER_SVC_ID --publicurl="http://$MY_PUBLIC_IP:8776/v1/%(tenant_id)s" --internalurl="http://$MY_PRIVATE_IP:8776/v1/%(tenant_id)s" --adminurl="http://$MY_PRIVATE_IP:8776/v1/%(tenant_id)s"
+
+# List new services
+keystone service-list
+
+# List new endpoints
+keystone endpoint-list
+
+# Configure Cinder
+( cat | sudo tee -a /etc/cinder/cinder.conf ) <<EOF
+my_ip = $MY_PRIVATE_IP
+rabbit_host = $MY_PRIVATE_IP
+glance_host = $MY_PRIVATE_IP
+control_exchange = cinder
+notification_driver = cinder.openstack.common.notifier.rpc_notifier
+enabled_backends=cinder-volumes-sata-backend,cinder-volumes-ssd-backend
+
+[database]
+connection = mysql://cinder:notcinder@$MY_PRIVATE_IP/cinder
+
+[cinder-volumes-sata-backend]
+volume_group=cinder-volumes-sata
+volume_driver=cinder.volume.drivers.lvm.LVMISCSIDriver
+volume_backend_name=sata
+
+[cinder-volumes-ssd-backend]
+volume_group=cinder-volumes-ssd
+volume_driver=cinder.volume.drivers.lvm.LVMISCSIDriver
+volume_backend_name=ssd
+
+[keystone_authtoken]
+auth_uri = http://$MY_PRIVATE_IP:5000
+auth_host = $MY_PRIVATE_IP
+auth_port = 35357
+auth_protocol = http
+admin_tenant_name = Services
+admin_user = cinder
+admin_password = notcinder
+EOF
+
+# Configure TGT
+( cat | sudo tee -a /etc/tgt/targets.conf ) <<EOF
+default-driver iscsi
+EOF
+
+# Initialize Cinder database
+sudo cinder-manage db sync
+
+# Create volume groups
+sudo vgcreate cinder-volumes-sata /dev/loop0
+sudo vgcreate cinder-volumes-ssd  /dev/loop1
+
+# Verify volume groups
+sudo vgdisplay
+
+# Start TGT and Open iSCSI
+sudo service tgt start
+sudo service open-iscsi start
+
+# Start Cinder
+sudo service cinder-api start
+sudo service cinder-scheduler start
+sudo service cinder-volume start
+
+# Verify Cinder is running
+pgrep -l cinder
+
+# Verify Cinder services are functioning and checking in :-)
+cinder service-list
+
+# Create a volume-type
+cinder type-create SATA
+
+# Link volume-type to back-end name
+cinder type-key SATA set volume_backend_name=sata
+
+# Create another volume-type
+cinder type-create SSD
+
+# Link volume-type to back-end name
+cinder type-key SSD set volume_backend_name=ssd
+
+# Use 'user' credentials
+source ~/credentials/user
+
+# Create a new volume
+cinder create 1 --volume-type sata --display-name MyFirstVolume
+MYFIRSTVOLUME_ID=`cinder show MyFirstVolume | awk '/ id / { print $4 }'`
+
+# Boot an instance to attach volume to
+nova boot --image cirros-qcow2 --flavor m1.tiny MyVolumeInstance
+MYVOLUMEINSTANCE_ID=`nova show MyVolumeInstance | awk '/ id / { print $4 }'`
+
+# List instances, notice status of instance
+nova list
+
+# List volumes, notice status of volume
+cinder list
+
+# Attach volume to instance after instance is active, and volume is available
+nova volume-attach $MYVOLUMEINSTANCE_ID $MYFIRSTVOLUME_ID
+
+# Ping instance after status is active, and network is up
+MYVOLUMEINSTANCE_IP=`nova show MyVolumeInstance | awk '/ private / { print $5 }'`
+sudo ip netns exec $PRIVATE_NETNS_ID ping -c 3 $MYVOLUMEINSTANCE_IP
+
+# Log into instance ( username is 'cirros', password is 'cubswin:)' )
+sudo ssh-keygen -f "/root/.ssh/known_hosts" -R $MYVOLUMEINSTANCE_IP
+sudo ip netns exec $PRIVATE_NETNS_ID ssh cirros@$MYVOLUMEINSTANCE_IP
+
+# List storage devices
+sudo fdisk -l
+
+# Make filesystem on volume
+### Toby - in prod you would partition this disk not just mount it
+sudo mkfs.ext3 /dev/vdb
+
+# Create a mountpoint
+sudo mkdir /extraspace
+
+# Mount volume at mountpoint
+sudo mount /dev/vdb /extraspace
+
+# Create a file on volume
+sudo touch /extraspace/helloworld.txt
+sudo ls /extraspace
+
+# Unmount volume
+sudo umount /extraspace
+
+# Log out of instance
+exit
+
+# Detach volume from instance
+nova volume-detach $MYVOLUMEINSTANCE_ID $MYFIRSTVOLUME_ID
+
+# List volumes, notice status of volume
+cinder list
+
+# Delete instance
+nova delete MyVolumeInstance
+
+# Try booting another instance, attach volume to new instance, and mount volume. Data should be preserved on volume.
+
+# Create a bootable volume from an image
+cinder create 1 --volume-type ssd --display-name MyBootableVolume --image-id $IMAGE1_ID
+MYBOOTABLEVOLUME_ID=`cinder show MyBootableVolume | awk '/ id / { print $4 }'`
+
+# List volumes, notice bootable attribute of volume
+cinder list
+
+# Boot an instance from the bootable volume
+nova boot --boot-volume $MYBOOTABLEVOLUME_ID --flavor m1.tiny MyBootableVolumeInstance
+
+# List instances, notice status of instance
+nova list
+
+# Ping instance after status is active, and network is up
+MYBOOTABLEVOLUMEINSTANCE_IP=`nova show MyBootableVolumeInstance | awk '/ private / { print $5 }'`
+sudo ip netns exec $PRIVATE_NETNS_ID ping -c 3 $MYBOOTABLEVOLUMEINSTANCE_IP
+
+# Log into instance ( username is 'cirros', password is 'cubswin:)' )
+sudo ssh-keygen -f "/root/.ssh/known_hosts" -R $MYBOOTABLEVOLUMEINSTANCE_IP
+sudo ip netns exec $PRIVATE_NETNS_ID ssh cirros@$MYBOOTABLEVOLUMEINSTANCE_IP
+
+# Create a file and exit
+touch helloworld.txt
+ls
+exit
+
+# Stop instance
+nova stop MyBootableVolumeInstance
+
+# Delete instance
+nova delete MyBootableVolumeInstance
+
+# List instances
+nova list
+
+# Boot a new instance from the bootable volume
+nova boot --boot-volume $MYBOOTABLEVOLUME_ID --flavor m1.tiny MyNewBootableVolumeInstance
+
+# List instances, notice status of instance
+nova list
+
+# Ping instance after status is active, and network is up
+MYNEWBOOTABLEVOLUMEINSTANCE_IP=`nova show MyNewBootableVolumeInstance | awk '/ private / { print $5 }'`
+sudo ip netns exec $PRIVATE_NETNS_ID ping -c 3 $MYNEWBOOTABLEVOLUMEINSTANCE_IP
+
+# Log into instance ( username is 'cirros', password is 'cubswin:)' )
+sudo ssh-keygen -f "/root/.ssh/known_hosts" -R $MYNEWBOOTABLEVOLUMEINSTANCE_IP
+sudo ip netns exec $PRIVATE_NETNS_ID ssh cirros@$MYNEWBOOTABLEVOLUMEINSTANCE_IP
+
+# Notice file is preserved
+ls
+
+# Log out of instance
+exit
+
+# Delete instance
+nova delete MyNewBootableVolumeInstance

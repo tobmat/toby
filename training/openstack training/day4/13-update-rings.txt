@@ -1,0 +1,67 @@
+
+# Update the rings
+cd /etc/swift
+
+# Verify the contents of the current rings
+sudo swift-ring-builder object.builder
+sudo swift-ring-builder container.builder
+sudo swift-ring-builder account.builder
+
+# Add the new storage locations to the rings
+# Notice the throttled weight of 200, this will allow us to slowly incorporate additional capacity
+sudo swift-ring-builder object.builder add r1z5-$MY_PRIVATE_IP:6000/loop6 200
+sudo swift-ring-builder object.builder add r1z6-$MY_PRIVATE_IP:6000/loop7 200
+
+sudo swift-ring-builder container.builder add r1z5-$MY_PRIVATE_IP:6001/loop6 200
+sudo swift-ring-builder container.builder add r1z6-$MY_PRIVATE_IP:6001/loop7 200
+
+sudo swift-ring-builder account.builder add r1z5-$MY_PRIVATE_IP:6002/loop6 200
+sudo swift-ring-builder account.builder add r1z6-$MY_PRIVATE_IP:6002/loop7 200
+
+# Verify the contents of updated rings
+sudo swift-ring-builder object.builder
+sudo swift-ring-builder container.builder
+sudo swift-ring-builder account.builder
+
+# Rebalance each ring using a seed value
+### Toby - if you change seed value everything is moved in the cluster
+sudo swift-ring-builder object.builder rebalance 1337
+sudo swift-ring-builder container.builder rebalance 1337
+sudo swift-ring-builder account.builder rebalance 1337
+
+# Verify the contents of updated rings
+# Notice the reduced number of partitions for the new locations
+sudo swift-ring-builder object.builder
+sudo swift-ring-builder container.builder
+sudo swift-ring-builder account.builder
+
+# Ensure all files are owned by swift
+### Toby - this is needed for rebalance to work
+sudo chown -R swift: /etc/swift
+
+# Navigate back to home directory
+cd
+
+# After replication settles down...
+#
+#    1. Increase weight of the new storage locations
+#
+#       sudo swift-ring-builder object.builder    set_weight r1z5-$MY_PRIVATE_IP:6000/loop6 400
+#       sudo swift-ring-builder object.builder    set_weight r1z6-$MY_PRIVATE_IP:6000/loop7 400
+#       sudo swift-ring-builder container.builder set_weight r1z5-$MY_PRIVATE_IP:6001/loop6 400
+#       sudo swift-ring-builder container.builder set_weight r1z6-$MY_PRIVATE_IP:6001/loop7 400
+#       sudo swift-ring-builder account.builder   set_weight r1z5-$MY_PRIVATE_IP:6002/loop6 400
+#       sudo swift-ring-builder account.builder   set_weight r1z6-$MY_PRIVATE_IP:6002/loop7 400
+#
+#    2. Rebalance
+#    3. Distribute updated rings
+#    4. Continue to increase weight and rebalance until new storage locations are at target weight
+#
+# Changing min_part_hours
+#
+#		sudo swift-ring-builder object.builder set_min_part_hours 0
+#		sudo swift-ring-builder container.builder set_min_part_hours 0
+#		sudo swift-ring-builder account.builder set_min_part_hours 0
+
+# Find (potentially) new locations of object
+sudo swift-get-nodes /etc/swift/object.ring.gz $ACCOUNT_ID testcontainer test.txt

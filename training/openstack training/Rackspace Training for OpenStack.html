@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<!-- saved from url=(0034)http://192.168.2.250/fundamentals/ -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+		<title>Rackspace Training for OpenStack</title>
+		<link href="ref/bootstrap.min.css" rel="stylesheet" media="screen">
+		<link href="ref/style.css" rel="stylesheet" media="screen">
+	</head>
+	<!--
+
+	Control what content is display by changing the class and id of the body tag below.
+
+		<body class="nova-and-swift" id="day-1">                           OpenStack Fundamentals - Day 1
+		<body class="nova-and-swift" id="day-2">                           OpenStack Fundamentals - Day 2
+		<body class="nova-and-swift" id="day-3">                           OpenStack Fundamentals - Day 3
+		<body class="nova-and-swift" id="day-4">                           OpenStack Fundamentals - Day 4
+		<body class="nova-only" id="day-1">                                Compute Essentials - Day 1
+		<body class="nova-only" id="day-2">                                Compute Essentials - Day 2
+		<body class="swift-only" id="day-1">                               Object Storage Essentials - Day 1
+		<body class="swift-only" id="day-2">                               Object Storage Essentials - Day 2
+
+	Slides are not displayed by default. You can enable access by adding "with-slides" to the body class.
+
+		<body class="nova-and-swift with-slides" id="day-4">    With Slides
+		<body class="nova-and-swift" id="day-4">                Without Slides
+
+	-->
+	<body class="nova-and-swift with-slides" id="day-4">
+
+		<div class="navbar navbar-inverse navbar-fixed-top">
+			<div class="navbar-inner">
+				<div class="container">
+					<a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					</a>
+					<a class="brand" href="http://192.168.2.250/fundamentals/index.html">Rackspace Training for OpenStack</a>
+				</div>
+			</div>
+		</div>
+
+		<div class="container">
+			<h1 class="nova-and-swift">OpenStack Fundamentals</h1>
+			<h1 class="nova-only">OpenStack Compute Essentials</h1>
+			<h1 class="swift-only">OpenStack Object Storage Essentials</h1>
+			<p class="lead">Open source software for building private and public clouds</p>
+		</div>
+
+		<div class="container">
+			<div class="row">
+				<div class="span6" id="nova">
+					<div class="well">
+						<h3>Nova Compute</h3>
+						<p>Provision and manage large networks of virtual machines</p>
+						<hr>
+						<div class="slides">
+							<h4>Slides</h4>
+							<ol>
+								<li><a href="documentation/keystone.pdf">Keystone</a></li>
+								<li><a href="documentation/glance.pdf">Glance</a></li>
+								<li><a href="documentation/neutron.pdf">Neutron</a></li>
+								<li><a href="documentation/nova.pdf">Nova</a></li>
+								<li><a href="documentation/cinder.pdf">Cinder</a></li>
+								<li><a href="documentation/horizon.pdf">Horizon</a></li>
+							</ol>
+							<hr>
+						</div>
+						<div id="nova-part-1">
+							<h4>Exercises – Day 1</h4>
+							<ol>
+								<li><a href="day1/01-rabbitmq-mysql.txt">Controller – RabbitMQ and MySQL</a></li>
+								<li><a href="day1/02-keystone.txt">Keystone – Identity</a></li>
+								<li><a href="day1/03-glance.txt">Glance – Image Store</a></li>
+								<li><a href="day1/04-neutron-part1.txt">Neutron – Networking Part 1</a></li>
+								<li><a href="day1/05-nova.txt">Nova – Compute</a></li>
+								<li><a href="day1/06-cinder.txt">Cinder – Block Storage</a></li>
+							</ol>
+						</div>
+						<div id="nova-part-2">
+							<hr>
+							<h4>Exercises – Day 2</h4>
+							<ol start="7">
+								<li><a href="day2/07-horizon.txt">Horizon – Dashboard</a></li>
+								<li><a href="day2/08-cloud-init.txt">Cloud Init</a></li>
+								<li><a href="day2/09-user-data.txt">User Data – Instance Customization</a></li>
+								<li><a href="day2/10-file-injection.txt">File Injection</a></li>
+								<li><a href="day2/11-neutron-part2.txt">Neutron – Networking Part 2</a></li>
+								<li>
+									Demo / Workshop - Multi-Node Cluster
+									<ul>
+										<li><a href="day2/12a-multi-node-controller.txt">Controller Node</a></li>
+										<li><a href="day2/12b-multi-node-network.txt">Network Node</a></li>
+										<li><a href="day2/12c-multi-node-compute.txt">Compute Nodes</a></li>
+									</ul>
+								</li>
+							</ol>
+						</div>
+					</div>
+				</div>
+				<div class="span6" id="swift">
+					<div class="well">
+						<h3>Swift Object Storage</h3>
+						<p>Highly available, distributed, eventually consistent blob store</p>
+						<hr>
+						<div class="slides">
+							<h4>Slides</h4>
+							<ol>
+								<li><a href="documentation/swift.pdf">Swift</a></li>
+							</ol>
+							<hr>
+						</div>
+						<div id="swift-part-1">
+							<h4>Exercises – Day <span class="nova-and-swift">3</span><span class="swift-only">1</span></h4>
+							<ol>
+								<li><a href="day3/01-mysql.txt">Controller – MySQL</a></li>
+								<li><a href="day3/02-keystone.txt">Keystone – Identity</a></li>
+								<li><a href="day3/03-swift.txt">Swift – Object Storage</a></li>
+								<li><a href="day3/04-create-rings.txt">Create Rings</a></li>
+								<li><a href="day3/05-client.txt">Swift Client – Create Containers, Upload &amp; Download Objects</a></li>
+								<li><a href="day3/06-acls.txt">ACLs – Access Control Lists</a></li>
+								<li><a href="day3/07-static-web.txt">Static Web</a></li>
+								<li><a href="day3/08-large-object.txt">Large Objects</a></li>
+							</ol>
+						</div>
+						<div id="swift-part-2">
+							<hr>
+							<h4>Exercises – Day <span class="nova-and-swift">4</span><span class="swift-only">2</span></h4>
+							<ol start="9">
+								<li><a href="day4/09-versioned-object.txt">Versioned Objects</a></li>
+								<li><a href="day4/10-expiring-object.txt">Expiring Objects</a></li>
+								<li><a href="day4/11-quarantine.txt">Quarantine</a></li>
+								<li><a href="day4/12-replication.txt">Replication</a></li>
+								<li><a href="day4/13-update-rings.txt">Update Rings – Add Storage Capacity</a></li>
+								<li><a href="day4/14-dispersion-report.txt">Dispersion Report</a></li>
+								<li><a href="day4/15-drive-audit.txt">Drive Audit</a></li>
+								<li><a href="day4/16-recon.txt">Recon</a></li>
+								<li>
+									Demo / Workshop - Multi-Node Cluster
+									<ul>
+										<li><a href="day4/17a-multi-node-controller.txt">Controller Node</a></li>
+										<li><a href="day4/17b-multi-node-storage.txt">Storage Nodes</a></li>
+									</ul>
+								</li>
+							</ol>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script src="./Rackspace Training for OpenStack_files/jquery-1.8.3.js"></script>
+		<script src="./Rackspace Training for OpenStack_files/bootstrap.min.js"></script>
+	
+
+</body></html>

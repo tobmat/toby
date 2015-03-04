@@ -1,0 +1,25 @@
+
+# Install Ubuntu Cloud Keyring and add Ubuntu Cloud Archive repository for Icehouse
+# Note: This has already been completed for you in this training environment.
+# sudo apt-get install -y ubuntu-cloud-keyring python-software-properties
+# sudo add-apt-repository -y cloud-archive:icehouse
+# sudo apt-get update
+
+# Synchronize time
+sudo ntpdate -u training.rackspace.local
+
+# Preseed MySQL install
+cat <<EOF | sudo debconf-set-selections
+mysql-server-5.1 mysql-server/root_password password notmysql
+mysql-server-5.1 mysql-server/root_password_again password notmysql
+mysql-server-5.1 mysql-server/start_on_boot boolean true
+EOF
+
+# Install MySQL
+sudo apt-get install -y mysql-server python-mysqldb
+
+# Configure MySQL
+sudo sed -i "s/127.0.0.1/$MY_PRIVATE_IP\nskip-name-resolve\ncharacter-set-server = utf8\ncollation-server = utf8_general_ci\ninit-connect = 'SET NAMES utf8'/g" /etc/mysql/my.cnf
+
+# Restart MySQL
+sudo service mysql restart
