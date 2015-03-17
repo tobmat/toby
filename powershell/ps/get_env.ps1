@@ -1,0 +1,11 @@
+﻿" "
+ "====================================="
+ "Current Environment Values:"
+ "OS_PASSWORD:    $Env:OS_PASSWORD"
+ "OS_TENANT_ID:   $Env:OS_TENANT_ID"
+ "OS_TENANT_NAME: $Env:OS_TENANT_NAME"
+ "OS_USERNAME:    $Env:OS_USERNAME"
+
+ "OS_AUTH_URL:    $Env:OS_AUTH_URL"
+ "====================================="
+ " "

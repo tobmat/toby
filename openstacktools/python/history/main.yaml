@@ -1,7 +1,0 @@
-heat_template_version: 2013-05-23
-resources:
-  my_server:
-    type: my_nova.yaml
-    properties:
-      key_name: devops
-      flavory: m1.small
