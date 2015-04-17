@@ -1,0 +1,241 @@
+vi /etc/network/interfaces
+ping 62.193.8.59
+ifdown eth0
+ifup eth0
+ifup eth1
+ping 62.193.10.10
+ping 62.193.4.1       <<<< NOTE: Can't ping this
+ping 62.193.6.67      <<<< NOTE: Can't ping this
+ssh root@62.193.6.67
+ssh admin@62.193.6.67
+wget -qO - https://packages.elasticsearch.org/GPG-KEY-elasticsearch | sudo apt-key add -
+ping 8.8.8.8
+ping 62.193.6.254
+ping google.com       <<<< NOTE: Can't ping this
+vi /etc/resolv.conf   <<<< NOTE: This file is empty but could have gotten overridden
+wget -qO - https://packages.elasticsearch.org/GPG-KEY-elasticsearch | sudo apt-key add -
+sudo add-apt-repository "deb http://packages.elasticsearch.org/elasticsearch/1.4/debian stable main"
+sudo apt-get update && sudo apt-get install elasticsearch
+sudo update-rc.d elasticsearch defaults 95 10     <<<< This makes sure it starts on boot
+service elasticsearch status
+service elasticsearch start
+apt-get install default-jdk
+service elasticsearch start
+service elasticsearch status
+wget https://download.elasticsearch.org/logstash/logstash/packages/debian/logstash_1.4.2-1-2c0f5a1_all.deb
+dpkg -i logstash_1.4.2-1-2c0f5a1_all.deb
+service logstash status
+wget https://download.elasticsearch.org/kibana/kibana/kibana-3.1.2.tar.gz
+apt-get install apache2
+mv kibana-3.1.2.tar.gz /var/www/html
+cd /var/www/html/
+ls
+apt-get install sl        <<<<< This just makes a train image go by, not needed...
+vi /etc/environment 
+tar -xvf kibana-3.1.2.tar.gz 
+cd kibana-3.1.2/
+cd ..
+rm kibana-3.1.2.tar.gz 
+rm index.html 
+cd kibana-3.1.2/
+mv * ..
+cd ..
+rm kibana-3.1.2/ -r
+vi /etc/elasticsearch/elasticsearch.yml 
+vi /var/www/html/config.js 
+netstat
+cat /var/log/elasticsearch/elasticsearch.log
+service elasticsearch stop
+service elasticsearch start
+#service elasticsearch restart
+service elasticsearch status
+cd /var/www/html
+service apache2 restart
+ifconfig
+wget localhost:9200   <<<< connection refused
+vi index.html.1
+shutdown -r now
+cd /var/log
+cd apache2/
+tail error.log  -f
+curl 127.0.0.1:9200   <<<< connection refused
+/etc/init.d/elasticsearch restart
+apt-get install chromium-browser
+apt-get update
+vi /etc/resolv.conf   <<<< says not to edit, no changes present
+ping 8.8.8.8
+ping google.com
+apt-get install chromium-browser
+exit
+curl localhost 443
+cd /etc/apache2/sites-available/
+vi default-ssl.conf 
+cd ..
+cd sites-enabled/
+ls
+vi 000-default.conf   <<<< looks like Ken changed port from 9200 to 80
+cd ..
+vi apache2.conf 
+vi ports.conf         <<<< changed port from 9200 to 80
+service apache2 restart
+curl 127.0.0.1 443
+service apache2 stop
+curl 127.0.0.1 443
+service elasticsearch status
+service elasticsearch start
+service elasticsearch status
+curl 127.0.0.1 443
+netstat -lanp
+service elasticsearch status
+tail /var/log/elasticsearch/elasticsearch.log
+a2dismod ssl                <<<<< disable ssl
+service apache2 restart
+netstat -nutlap | grep 443
+netstat -nutlap
+service apache2 start
+netstat -nutlap
+service elasticsearch start
+service elasticsearch status
+netstat -nutlap | grep 80
+netstat -nutlap | grep 443
+service elasticsearch status
+tail /var/log/elasticsearch/elasticsearch.log
+vi /etc/rc.local 
+vi /etc/init.d/elasticsearch
+service elasticsearch restart
+tail /var/log/elasticsearch/elasticsearch.log
+curl 127.0.0.1 443
+service apache2 stop
+curl 127.0.0.1 443
+tail /var/log/elasticsearch/elasticsearch.log
+service elasticsearch status
+service elasticsearch restart
+service elasticsearch status
+tail /var/log/elasticsearch/elasticsearch.log -f
+service apache2 start
+curl 127.0.0.1 443
+netstat -an | grep :443
+netstat -lanp
+netstat -lan
+history
+netstat -nutlap | grep 443
+curl 62.193.8.60 443
+curl localhost 443
+service apache2 stop
+curl localhost 443
+service elasticsearch stop
+service elasticsearch start
+curl localhost 443
+watch curl localhost 443
+service apache2 stop
+service elasticsearch status
+watch curl localhost 443
+service elasticsearch restart
+service elasticsearch status
+tail /var/log/elasticsearch/elasticsearch.log
+watch curl localhost 443
+curl 127.0.0.1 443
+tail /var/log/elasticsearch/elasticsearch.log
+tail /var/log/elasticsearch/elasticsearch.log -f
+shutdown -r now
+curl 127.0.0.1:443
+vi /var/www/html/config.js 
+service apache2 restart
+vi /var/www/html/config.js 
+service apache2 restart
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages"
+ssh-keygen
+ssh-copy-id 62.193.10.10
+ssh-copy-id admin@62.193.10.10
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" 
+service logstash status
+service logstash stop
+vi /etc/logstash/conf.d/logstash.conf
+vi /etc/init.d/logstash
+locate logstash
+/var/lib/logstash
+/opt/logstash/bin/logstash -f logstash.conf
+ls
+tail /var/log/logstash/logstash.log
+dpkg-reconfigure tzdata       <<<< This sets the correct time on the server
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstash.conf
+curl 127.0.0.1:443
+curl 127.0.0.1
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | grep error
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstashGOOD.conf
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages"
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstashGOOD.conf
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstashGOOD.conf
+elasticsearch/bin/plugin -install mobz/elasticsearch-head
+locate elasticsearch
+cd /opt
+ls
+cd /init.d
+ls
+cd /etc
+cd init.d
+ls
+elasticsearch/bin/plugin -install mobz/elasticsearch-head
+locate elasticsearch/bin/plugin
+/usr/share/elasticsearch/bin/plugin -install mobz/elasticsearch-head
+vi /etc/resolv.conf
+ping google.com
+/usr/share/elasticsearch/bin/plugin -install mobz/elasticsearch-head
+curl 62.193.8.60/_plugin/head:443
+sudo chromium-browser
+exit
+ls
+exit
+screen -r logstash
+screen -S logstash
+screen -r logstash
+apt-get install snmpd
+ufw disable
+vi /etc/snmp/snmpd.conf 
+vi /etc/default/snmpd
+/etc/init.d/snmpd status
+/etc/init.d/snmpd restart
+/etc/init.d/snmpd status
+tail /var/log/syslog
+apt-get install snmp
+/etc/init.d/snmpd restart
+/etc/init.d/snmpd status
+sudo /usr/sbin/snmpd -f
+vi /etc/default/snmpd 
+rm /etc/default/snmpd
+rm /etc/snmp/snmpd.conf 
+apt-get remove snmpd --purge
+apt-get install snmpd
+service snmpd status
+sudo apt-get install snmp snmp-mibs-downloader
+vi /etc/snmp/snmp.conf 
+vi /etc/snmp/snmpd.conf 
+service snmpd restart
+service snmpd status
+history
+wget http://mathias-kettner.com/download/check_mk-1.2.4.tar.gz
+tar -zxf check_mk-1.2.4.tar.gz 
+cd check_mk-1.2.4/
+./setup.sh 
+apt-get install dialog xinetd build-essential apache2 libapache2-mod-python
+./setup.sh 
+apt-get install nagios
+apt-get install check_mk
+apt-get install check_mk-agent
+wget https://mathias-kettner.com/download/check-mk-agent_1.2.4p5-2_all.deb
+dpkg -i check-mk-agent_1.2.4p5-2_all.deb 
+cd /etc/init.d
+vi logstash
+cp logstash logstash-modified
+vi logstash-modified 
+service logstash-modified start
+vi logstash-modified 
+screen -S logstash
+screen -r logstash 
+screen -S logstash
+screen -l
+screen -list
+screen -r logstash 
+history
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" 
+vi /etc/logstash/conf.d/logstash.conf 

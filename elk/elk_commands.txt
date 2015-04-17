@@ -1,0 +1,594 @@
+vi /etc/network/interfaces
+vi /etc/network/interfaces.d/eth0
+vi /etc/network/interfaces
+vi /etc/network/interfaces.d/eth0.cfg
+vi /etc/network/interfaces
+ifup eth0
+ping 62.193.8.59
+ifdown eth0
+ifup eth0
+vi /etc/network/interfaces
+ifup eth1
+ping 62.193.10.10
+ping 62.193.4.1
+ping 62.193.6.67
+ssh root@62.193.6.67
+ssh admin@62.193.6.67
+wget -qO - https://packages.elasticsearch.org/GPG-KEY-elasticsearch | sudo apt-key add -
+ping google.com
+ping 8.8.8.8
+ping 62.193.6.254
+vi /etc/network/interfaces
+ifdown eth1
+ifup eth1
+ping google.com
+ping 8.8.8.8
+vi /etc/
+vi /etc/resolv
+vi /etc/resolv.conf 
+ping google.com
+ifdown eth0
+ping google.com
+ifdown eth1
+ifup eth1
+ping google.com
+vi /etc/network/interfaces
+vi /etc/resolv.conf 
+ping google.com
+wget -qO - https://packages.elasticsearch.org/GPG-KEY-elasticsearch | sudo apt-key add -
+sudo add-apt-repository "deb http://packages.elasticsearch.org/elasticsearch/1.4/debian stable main"
+sudo apt-get update && sudo apt-get install elasticsearch
+sudo update-rc.d elasticsearch defaults 95 10
+service elasticsearc hstatus
+service elasticsearch status
+service elasticsearch start
+apt-get install default-jdk
+service elasticsearch start
+service elasticsearch status
+wget https://download.elasticsearch.org/logstash/logstash/packages/debian/logstash_1.4.2-1-2c0f5a1_all.deb
+dpkg -i logstash_1.4.2-1-2c0f5a1_all.deb
+service logstash status
+wget https://download.elasticsearch.org/kibana/kibana/kibana-3.1.2.tar.gz
+apt-get install apache2
+mv kibana-3.1.2.tar.gz /var/www/html
+cd /var/www/html/
+ls
+apt-get install sl
+ls
+sl
+vi /etc/bash
+vi /etc/environment 
+sl
+export PATH="/usr/games:$PATH"
+sl
+ls
+tar -xvf kibana-3.1.2.tar.gz 
+ls
+cd kibana-3.1.2/
+ls
+cd ..
+ls
+rm kibana-3.1.2.tar.gz 
+rm index.html 
+cd kibana-3.1.2/
+mv * ..
+cd ..
+ls
+rm kibana-3.1.2/
+rm kibana-3.1.2/ -r
+ls
+cd /etc
+ls
+cd elasticsearch/
+ls
+vi elasticsearch.yml 
+vi /var/www/html/config.js 
+vi elasticsearch.yml 
+service elasticsearch status
+vi elasticsearch.yml 
+netstat
+cat /var/log/elasticsearch/elasticsearch.log
+vi elasticsearch.yml 
+service elasticsearch restart
+service elasticsearch status
+vi elasticsearch.yml 
+service elasticsearch restart
+service elasticsearch status
+cd /var/www/htm
+cd /var/www/html
+ls
+vi config.js 
+service apache2 restart
+vi config.js 
+ifconfig
+vi config.js 
+service apache2 restart
+vi /etc/elasticsearch/elasticsearch.yml 
+service elasticsearch restart
+cat /var/log/elasticsearch/elasticsearch.log 
+wget localhost:9200
+vi index.html.1
+vi /etc/elasticsearch/elasticsearch.yml 
+service elasticsearch stop
+service elasticsearch start
+shutdown -r now
+cd /var/log
+ls
+cd apache2/
+ls
+tail error.log 
+tail error.log  -f
+ls
+cd ..
+ls
+curl 127.0.0.1:9200
+cd /var/www/html/
+vi config.js 
+service apache2 restart
+vi /etc/elasticsearch/elasticsearch.yml
+/etc/init.d/elasticsearch restart
+curl 127.0.0.1:9200
+apt-get install chromium-browser
+apt-get upate
+apt-get update
+ping google.com
+ping 8.8.8.8
+vi /etc/resolv.conf 
+ping 8.8.8.8
+ping google.com
+apt-get install chromium-browser
+exit
+ls
+vi /etc/elasticsearch/elasticsearch.yml 
+vi /var/www/html/config.js 
+service elasticsearch restart
+service apache2 restart
+curl localhost 443
+cd /etc/apache2/
+ls
+cd sites-available/
+ls
+vi default-ssl.conf 
+cd ..
+cd sites-enabled/
+ls
+vi 000-default.conf 
+cd ..
+ls
+vi apache2.conf 
+vi ports.conf 
+service apache2 restart
+curl 127.0.0.1 443
+service apache2 stop
+curl 127.0.0.1 443
+service elasticsearch status
+service elasticsearch start
+service elasticsearch status
+curl 127.0.0.1 443
+netstat -lanp
+service elasticsearch status
+tail /var/log/elasticsearch/elasticsearch
+tail /var/log/elasticsearch/elasticsearch.log
+a2dismod ssl
+service apache2 restart
+netstat -nutlap | grep 443
+netstat -nutlap
+service apache2 start
+netstat -nutlap
+service elastcisearch start
+service elasticsearch start
+service elasticsearch status
+netstat -nutlap
+netstat -nutlap | 80
+netstat -nutlap | grep 80
+netstat -nutlap | grep 443
+service elasticsearch status
+vi /etc/elasticsearch/elasticsearch.yml 
+tail /var/log/elasticsearch/elasticsearch.log
+vi /etc/rc.local 
+vi /etc/elasticsearch/elasticsearch.yml 
+cd /etc/init.d
+ls
+vi elasticsearch 
+service elasticsearch restart
+tail /var/log/elasticsearch/elasticsearch.log
+curl 127.0.0.1 443
+service apache2 stop
+curl 127.0.0.1 443
+tail /var/log/elasticsearch/elasticsearch.log
+service elasticsearch status
+service elasticsearch restart
+service elasticsearch status
+tail /var/log/elasticsearch/elasticsearch.log -f
+service apache2 start
+curl 127.0.0.1 443
+netstat -an | grep :443
+netstat -lanp
+netstat -lan
+histolry
+histoly
+history
+netstat -nutlap | grep 443
+curl 62.193.8.60 443
+curl localhost 443
+service apache2 stop
+curl localhost 443
+service elasticsearch stop
+service elasticsearch start
+curl localhost 443
+watch curl localhost 443
+service apache2 stop
+service elasticsearch status
+watch curl localhost 443
+service elasticsearch restart
+service elasticsearch status
+tail /var/log/elasticsearch/elasticsearch.log
+watch curl localhost 443
+curl 127.0.0.1 443
+tail /var/log/elasticsearch/elasticsearch.log
+tail /var/log/elasticsearch/elasticsearch.log -f
+shutdown -r now
+curl 127.0.0.1:443
+vi /var/www/html/config.js 
+service apache2 restart
+vi /var/www/html/config.js 
+service apache2 restart
+ssh -t 62.193.10.10 "tail -f /var/log/cmessages"
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages"
+ssh keygen
+ssh-keygen
+ssh-copy-id 62.193.10.10
+ssh-copy-id admin@62.193.10.10
+exit
+ssh-copy-id admin@62.193.10.10
+ssh admin@62.193.10.10
+ssh -t 62.193.10.10 "tail -f /var/log/cmessages"
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages"
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" 
+cd /etc/logstash/
+ls
+cd conf.d/
+ls
+service logstash status
+vi /etc/init.d/logstash
+service logstash stop
+ls
+vi logstash.conf
+vi /etc/init.d/logstash
+locate logstash
+/var/lib/logstash/
+/var/lib/logstash
+vi /etc/init.d/logstash
+/opt/logstash/bin/logstash
+/opt/logstash/bin/logstash -f logstash.conf
+ls
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages"
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages"
+ssh admin@62.193.10.10
+ls
+vi logstash.conf 
+ls
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+ls
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+tail /var/log/logstash/logstash.lo
+tail /var/log/logstash/logstash.log
+vi logstash.conf 
+tail /var/log/logstash/logstash.log
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+tail /var/log/logstash/logstash.log
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages"
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages"
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+time
+tzconfig
+dpkg-reconfigure tzdata
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+dpkg-reconfigure tzdata
+vi logstash.conf 
+dpkg-reconfigure tzdata
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+vi logstash.conf 
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+history
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+ls
+cd /etc/log
+cd /etc/logstash/
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f logstash.conf
+ls
+cd conf.d/
+ls
+ssh -t admin@62.193.10.10 "tail -f /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstash.conf
+vi /etc/elasticsearch/elasticsearch.yml 
+curl 127.0.0.1 443
+curl 127.0.0.1:443
+curl 127.0.0.1
+cd /etc/logstash/
+ls
+cd conf.d/
+ls
+vi logstash2.conf 
+clear
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages"
+clear
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstash.conf
+vi logstash2.conf 
+ls
+vi logstash2.conf 
+/opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstash.conf
+vi logstash2.conf 
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstash2.conf
+vi logstash2.conf 
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstash2.conf
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages"
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstash2.conf
+date
+sudo dpkg-reconfigure tzdata
+date
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstash2.conf
+cp logstash2.conf logstash3.conf
+vi logstash3.conf 
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | grep error
+vi logstash3.conf 
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstash3.conf
+vi logstash3.conf 
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstash3.conf
+vi logstash3.conf 
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages"
+grok
+grep
+ls
+cp logstash3.conf logstashGOOD.conf
+vi logstash3.conf 
+vi logstashGOOD.conf 
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstashGOOD.conf
+vi logstashGOOD.conf 
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages"
+vi logstashGOOD.conf 
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstashGOOD.conf
+vi logstashGOOD.conf 
+rm logstash.conf 
+rm logstash2.conf 
+rm logstash3.conf 
+ls
+cp logstashGOOD.conf logstash.backup.conf
+vi logstashGOOD.conf 
+cp logstashGOOD.conf logstash.backup.conf
+ls
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstashGOOD.conf
+vi logstashGOOD.conf 
+elasticsearch/bin/plugin -install mobz/elasticsearch-head
+locate elasticsearch
+cd /opt
+ls
+cd /init.d
+ls
+cd /etc
+cd init.d
+ls
+elasticsearch/bin/plugin -install mobz/elasticsearch-head
+locate elasticsearch/bin/plugin
+/usr/share/elasticsearch/bin/plugin -install mobz/elasticsearch-head
+ping google.com
+ping 8.8.8.8
+vi /etc/resolv.conf
+ping google.com
+/usr/share/elasticsearch/bin/plugin -install mobz/elasticsearch-head
+curl https://62.193.8.60/_plugin/head/
+curl 62.193.8.60/_plugin/head/
+curl 62.193.8.60/_plugin/head:443
+sudo chromium-browser
+exit
+ls
+exit
+screen -r logstash
+screen -S logstash
+screen -r logstash
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstashGOOD.conf
+cd /etc/logstash/
+ls
+cd conf.d/
+ls
+mv logstashGOOD.conf logstash.conf
+vi logstash.conf 
+exit
+cd /etc/logstash/
+ls
+cd conf.d/
+ls
+vi logstashGOOD.conf 
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstashGOOD.conf
+vi logstashGOOD.conf 
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstashGOOD.conf
+vi logstashGOOD.conf 
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstashGOOD.conf
+vi logstashGOOD.conf 
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstashGOOD.conf
+vi logstashGOOD.conf 
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstashGOOD.conf
+vi logstashGOOD.conf 
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstashGOOD.conf
+vi logstashGOOD.conf 
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstashGOOD.conf
+vi logstashGOOD.conf 
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstashGOOD.conf
+vi logstashGOOD.conf 
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstashGOOD.conf
+hostname
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" | /opt/logstash/bin/logstash -f /etc/logstash/conf.d/logstashGOOD.conf
+apt-get install snmpd
+ufw disable
+vi /etc/default/snmpd 
+/etc/init.d/snmpd restart
+vi /etc/snmp/snmpd.conf 
+/etc/init.d/snmpd restart
+vi /etc/snmp/snmpd.conf 
+/etc/init.d/snmpd restart
+vi /etc/snmp/snmpd.conf 
+vi /etc/default/snmpd
+/etc/init.d/snmpd status
+/etc/init.d/snmpd restart
+/etc/init.d/snmpd status
+tail /var/log/syslog
+vi /etc/snmp/snmpd.conf 
+apt-get install snmp
+/etc/init.d/snmpd restart
+/etc/init.d/snmpd status
+tail /var/log/syslog
+/etc/init.d/snmp restart
+sudo /usr/sbin/snmpd -f
+ls
+history
+vi /etc/default/snmpd 
+rm /etc/default/snmpd
+rm /etc/snmp/snmpd.conf 
+apt-get remove snmpd --purge
+apt-get install snmpd
+service snmpd status
+history
+sudo apt-get install snmp snmp-mibs-downloader
+vi /etc/snmp/snmp.conf 
+vi /etc/snmp/snmpd.conf 
+service snmpd restart
+service snmpd status
+history
+wget http://mathias-kettner.com/download/check_mk-1.2.4.tar.gz
+ls
+rm check_mk-1.2.4.tar.gz 
+cd /tmp
+rm check_mk-1.2.4.tar.gz 
+wget http://mathias-kettner.com/download/check_mk-1.2.4.tar.gz
+tar -zxf check_mk-1.2.4.tar.gz 
+ls
+cd check_mk-1.2.4/
+./setup.sh 
+## apt-get install dialog xinetd build-essential apache2 libapache2-mod-python
+apt-get install dialog xinetd build-essential apache2 libapache2-mod-python
+./setup.sh 
+apt-get install nagiops
+apt-get install nagios
+apt-get install check_mk
+apt-get install check_mk-agent
+wget https://mathias-kettner.com/download/check-mk-agent_1.2.4p5-2_all.deb
+ls
+dpkg -i check-mk-agent_1.2.4p5-2_all.deb 
+history
+cd /etc/init.d
+ls
+vi logstash
+cp logstash logstash-modified
+vi logstash-modified 
+service logstash-modified start
+vi logstash-modified 
+screen -S logstash
+screen -r logstash 
+screen -S logstash
+screen -l
+screen -list
+screen -r logstash 
+history
+ssh -t admin@62.193.10.10 "tail -F /var/log/cmessages" 
+vi /etc/logstash/conf.d/logstash.conf 
