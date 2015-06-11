@@ -1,0 +1,6 @@
+{
+	"chef_environment": "prod",
+	"run_list":[
+        "role[windows_server]"
+	]
+}
